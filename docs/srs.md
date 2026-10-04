@@ -246,3 +246,12 @@ Tiếp nhận yêu cầu bảo hành: nhân viên tiếp nhận tra cứu khách
 | Gemini  | Soạn khung hợp đồng API                                                       | Phụ lục C                  | Đối chiếu từng endpoint với User Story và ERD                     |
 
 ---
+
+## Phụ lục E. Peer review
+
+- **Peer review với:** Thái An Quốc – MSSV [ ] (track SE)
+- **Tóm tắt phạm vi bạn đọc đã trình bày lại sau 5 phút (ghi đúng lời bạn nói):** [ ]
+- **Đối chiếu với phạm vi gốc:** [x] Đúng ☐ Đúng một phần ☐ Sai
+- **Điểm bạn thấy chưa rõ hoặc mâu thuẫn:**
+    1. Thiếu API Contract
+- **Tôi đã chỉnh sửa:** [ghi cụ thể mục nào, sửa gì]
