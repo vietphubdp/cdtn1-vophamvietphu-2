@@ -109,9 +109,11 @@ Tiếp nhận yêu cầu bảo hành: nhân viên tiếp nhận tra cứu khách
 
 ## 4. Yêu cầu phi chức năng
 
-| Mã   | Loại      | Yêu cầu (có ngưỡng đo được)                                                                                                                  | Cách kiểm chứng                        |
-| :--- | :-------- | :------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------- |
-| NFR1 | Hiệu năng | Trang đầu (20 dòng) của danh sách phiếu hiển thị dưới 2 giây với 10.000 phiếu; tra cứu khách theo số điện thoại dưới 1 giây với 65.000 hồ sơ | Nạp dữ liệu mẫu, đo thời gian phản hồi |
+| Mã   | Loại      | Yêu cầu (có ngưỡng đo được)                                                                                                                                              | Cách kiểm chứng                                        |
+| :--- | :-------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------- |
+| NFR1 | Hiệu năng | Trang đầu (20 dòng) của danh sách phiếu hiển thị dưới 2 giây với 10.000 phiếu; tra cứu khách theo số điện thoại dưới 1 giây với 65.000 hồ sơ                             | Nạp dữ liệu mẫu, đo thời gian phản hồi                 |
+| NFR2 | Bảo mật   | Nhân viên tiếp nhận chỉ thấy số điện thoại khách ở dạng che 4 số (ví dụ 090\*\*\*\*567); chỉ Quản lý trung tâm thấy đầy đủ. Đúng ở 100% màn hình và 100% kết quả trả về. | Đăng nhập lần lượt hai vai trò, kiểm tra từng màn hình |
+| NFR3 | Khả dụng  | Một nhân viên tiếp nhận mới, chưa được hướng dẫn, lập xong một phiếu bảo hành đúng trong dưới 3 phút.                                                                    | Cho 3 người thử, bấm giờ từng người                    |
 
 ---
 
