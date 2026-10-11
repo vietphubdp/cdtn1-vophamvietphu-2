@@ -17,8 +17,9 @@ Mô tả lỗi do khách kể được ghi tự do bằng chữ, không phân nh
 
 ## 2. Yêu cầu môi trường
 
-Node.js 20 LTS (hoặc: Python 3.11 / JDK 21)
-PostgreSQL 16
+Node.js 20 LTS
+PostgreSQL 18
+EJS
 Biến môi trường: xem .env.example
 
 ## 3. Hướng dẫn chạy
