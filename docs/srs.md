@@ -31,9 +31,9 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 | W8  | Đính kèm ảnh, in phiếu, gửi tin nhắn cho khách; sửa, xóa khách hàng; hủy phiếu              | Mức COULD, ghi vào hướng mở rộng                                                                                                   |
 | W9  | Tìm phiếu theo mã phiếu hoặc số điện thoại; lọc danh sách phiếu theo trạng thái             | Mức COULD; lọc theo trạng thái chỉ có nghĩa khi L4, L5 đổi trạng thái phiếu (xem W2)                                               |
 | W10 | Cảnh báo thiết bị đã sửa từ 3 lần trở lên cùng một lỗi (gợi ý của anh Dũng, kỹ thuật viên)  | Cần lịch sử sửa chữa theo thiết bị; thuộc luồng L4 và hướng mở rộng                                                                |
-| W11 | Màn hình quản trị danh mục nhóm sự cố; xử lý ngày lễ khi tính hạn cam kết                   | Mức COULD; bản này cập nhật danh mục bằng dữ liệu cấu hình                                                                         |
+| W11 | Màn hình quản trị danh mục nhóm sự cố; xử lý ngày lễ khi tính hạn cam kết                   | Mức COULD; bản này cập nhật danh mục bằng dữ liệu cấu hình (seed) hoặc API quản lý danh mục (HT2), không có màn hình               |
 | W12 | Quản lý trung tâm quyết định "miễn phí" hoặc "có tính phí" cho phiếu chưa xác minh bảo hành | Bản này chỉ đánh dấu phiếu chờ quản lý quyết định; chức năng quyết định để hướng mở rộng                                           |
-| W13 | Đăng ký và quản lý tài khoản người dùng                                                     | Hạ tầng dùng chung, không phải nghiệp vụ của L2; bản này chỉ đăng nhập bằng tài khoản mẫu cấp sẵn để xác định vai trò và trung tâm |
+| W13 | Đăng ký và quản lý tài khoản người dùng                                                     | Hạ tầng dùng chung, không phải nghiệp vụ của L2; bản này chỉ đăng nhập, đăng xuất bằng tài khoản mẫu cấp sẵn để xác định vai trò và trung tâm (HT1) |
 
 ### 1.4. Thuật ngữ
 
@@ -61,8 +61,8 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 
 | Vai trò             | Được làm                                                                                                                                                     | Không được làm                                                                                                                                                        |
 | :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Nhân viên tiếp nhận | Tra cứu và tạo khách hàng, ghi nhận thiết bị, xác định tình trạng bảo hành, lập phiếu bảo hành, chọn nhóm sự cố và mức ưu tiên, xem phiếu của trung tâm mình | Xem số điện thoại đầy đủ (chỉ thấy dạng che); tự ghi "còn bảo hành" cho phiếu chưa xác minh bảo hành; xem phiếu của trung tâm khác; xóa phiếu hoặc khách hàng (QT-13) |
-| Quản lý trung tâm   | Xem toàn bộ phiếu của trung tâm mình (kể cả phiếu chưa xác minh bảo hành đang chờ quyết định), xem số điện thoại đầy đủ                                      | Xem phiếu của trung tâm không phụ trách; xóa vật lý phiếu hoặc khách hàng (QT-13)                                                                                     |
+| Nhân viên tiếp nhận | Tra cứu và tạo khách hàng, ghi nhận thiết bị, xác định tình trạng bảo hành, lập phiếu bảo hành, chọn nhóm sự cố và mức ưu tiên, xem phiếu của trung tâm mình | Xem số điện thoại đầy đủ (chỉ thấy dạng che); tự ghi "còn bảo hành" cho phiếu chưa xác minh bảo hành; xem phiếu của trung tâm khác; xóa phiếu hoặc khách hàng (QT-13); thêm, sửa, ngừng dùng danh mục sản phẩm và nhóm sự cố |
+| Quản lý trung tâm   | Xem toàn bộ phiếu của trung tâm mình (kể cả phiếu chưa xác minh bảo hành đang chờ quyết định), xem số điện thoại đầy đủ; thêm, sửa, ngừng dùng danh mục sản phẩm và nhóm sự cố (HT2) | Xem phiếu của trung tâm không phụ trách; lập phiếu, tạo khách, ghi nhận thiết bị (việc của nhân viên tiếp nhận); xóa vật lý phiếu, khách hàng hoặc danh mục (QT-13) |
 
 ---
 
@@ -75,14 +75,23 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 | FR1  | Hệ thống cho phép tra cứu khách hàng theo số điện thoại; số nhập vào được chuẩn hóa về 10 chữ số bắt đầu bằng 0 trước khi tra; nếu tìm thấy thì hiển thị hồ sơ khách.                                                                                                                                                                      |
 | FR2  | Hệ thống cho phép tạo khách hàng mới khi số điện thoại chưa tồn tại; họ tên và số điện thoại là bắt buộc, số điện thoại không được trùng.                                                                                                                                                                                                  |
 | FR3  | Hệ thống hiển thị danh sách thiết bị của khách (tên máy, serial/IMEI, ngày mua) và cho chọn một thiết bị để lập phiếu.                                                                                                                                                                                                                     |
-| FR4  | Hệ thống cho phép ghi nhận thiết bị mới cho khách; tên máy (chọn từ danh mục sản phẩm) và serial/IMEI là bắt buộc, serial/IMEI không được trùng; ngày mua được để trống nhưng không được ở tương lai; số tháng bảo hành điền sẵn theo sản phẩm (mặc định 12), nhân viên được sửa trong khoảng 1–60 tháng cho máy có chế độ bảo hành riêng. |
+| FR4  | Hệ thống cho phép ghi nhận thiết bị mới cho khách; tên máy (chọn từ danh mục sản phẩm đang sử dụng) và serial/IMEI là bắt buộc, serial/IMEI không được trùng; ngày mua được để trống nhưng không được ở tương lai; số tháng bảo hành điền sẵn theo số tháng mặc định của sản phẩm (sản phẩm mới tạo mặc định 12), để trống thì hệ thống lấy theo sản phẩm; nhân viên được sửa trong khoảng 1–60 tháng cho máy có chế độ bảo hành riêng. |
 | FR5  | Hệ thống xác định tình trạng bảo hành tại thời điểm tiếp nhận theo QT-05 và hiển thị một trong ba kết quả: còn bảo hành, hết bảo hành, chưa xác minh bảo hành (thiếu ngày mua).                                                                                                                                                            |
 | FR6  | Hệ thống cho phép lập phiếu với các trường bắt buộc: khách hàng, thiết bị, mô tả lỗi (trung tâm do hệ thống điền theo trung tâm của nhân viên); khi lưu thì sinh mã phiếu duy nhất, đặt trạng thái MỚI, ghi thời điểm tiếp nhận và dòng lịch sử trạng thái đầu tiên.                                                                       |
-| FR7  | Hệ thống cho phép chọn nhóm sự cố từ danh mục có sẵn; nhóm sự cố không bắt buộc, nếu không chọn thì phiếu được lưu với nhóm để trống (chưa phân loại).                                                                                                                                                                                     |
+| FR7  | Hệ thống cho phép chọn nhóm sự cố từ danh mục có sẵn (chỉ nhóm đang sử dụng); nhóm sự cố không bắt buộc, nếu không chọn thì phiếu được lưu với nhóm để trống (chưa phân loại).                                                                                                                                                                                     |
 | FR8  | Hệ thống điền sẵn mức ưu tiên theo mặc định của nhóm sự cố đã chọn (Trung bình nếu chưa chọn nhóm) và cho nhân viên đổi sang Cao, Trung bình hoặc Thấp.                                                                                                                                                                                    |
-| FR9  | Hệ thống tự sinh hạn cam kết từ thời điểm tiếp nhận: Cao 24 giờ, Trung bình 72 giờ, Thấp 120 giờ; mỗi Chủ nhật nằm trong khoảng tính được cộng thêm 24 giờ; phiếu tiếp nhận vào Chủ nhật được tính từ 00:00 thứ Hai.                                                                                                                       |
+| FR9  | Hệ thống tự sinh hạn cam kết từ thời điểm tiếp nhận: Cao 24 giờ, Trung bình 72 giờ, Thấp 120 giờ; mỗi Chủ nhật nằm trong khoảng tính được cộng thêm 24 giờ; phiếu tiếp nhận vào Chủ nhật được tính từ 00:00 thứ Hai; hạn cam kết không bao giờ rơi vào Chủ nhật (nếu kết thúc đúng 00:00 Chủ nhật thì hạn là 00:00 thứ Hai). Ngày và giờ tính theo giờ Việt Nam (UTC+7). |
 | FR10 | Hệ thống hiển thị danh sách phiếu của trung tâm mình, sắp theo hạn cam kết tăng dần, phân trang 20 dòng.                                                                                                                                                                                                                                   |
 | FR11 | Hệ thống đánh dấu phiếu quá hạn: phiếu có hạn cam kết sớm hơn thời điểm hiện tại và chưa ở trạng thái Hoàn tất hoặc Đã đóng.                                                                                                                                                                                                               |
+
+### 3.1a. Yêu cầu hỗ trợ (không thuộc nghiệp vụ L2)
+
+Hai yêu cầu dưới đây không nối với User Story nào. HT1 phục vụ QT-14 và NFR2 (biết vai trò, trung tâm của người gọi). HT2 phục vụ NFR5 và yêu cầu S1 của Bài tập 2 (≥ 2 thực thể đủ tạo, đọc, sửa, xóa).
+
+| Mã  | Yêu cầu hỗ trợ |
+| --- | --- |
+| HT1 | Hệ thống cho phép đăng nhập bằng tài khoản mẫu cấp sẵn (W13) và đăng xuất; sau khi đăng nhập, mọi yêu cầu mang vai trò và trung tâm của người dùng. |
+| HT2 | Hệ thống cho Quản lý trung tâm thêm, xem, sửa và ngừng sử dụng danh mục sản phẩm và danh mục nhóm sự cố qua API (không có màn hình, W11). "Xóa" là đánh dấu ngừng sử dụng (QT-13); mục ngừng sử dụng không còn hiện để chọn ở FR4, FR7 nhưng thiết bị, phiếu cũ vẫn giữ tham chiếu. |
 
 ### 3.2. User Story và mức MoSCoW
 
@@ -107,8 +116,8 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 #### US4
 
 - **AC1.** GIVEN thiết bị mua ngày 05/03/2026, bảo hành 12 tháng, WHEN tiếp nhận ngày 05/03/2027, THEN hệ thống hiển thị "Còn bảo hành" (ngày cuối cùng còn bảo hành).
-- **AC2 (ngoại lệ, giá trị biên).** GIVEN cùng thiết bị trên, WHEN tiếp nhận ngày 06/03/2027, THEN hệ thống hiển thị "Hết bảo hành"; phiếu vẫn lập được và được ghi là có tính phí.
-- **AC3 (ngoại lệ).** GIVEN thiết bị không có ngày mua, WHEN tiếp nhận, THEN hệ thống hiển thị "Chưa xác minh bảo hành", vẫn cho lập phiếu và đánh dấu phiếu chờ Quản lý trung tâm quyết định.
+- **AC2 (ngoại lệ, giá trị biên).** GIVEN cùng thiết bị trên, WHEN tiếp nhận ngày 06/03/2027, THEN hệ thống hiển thị "Hết bảo hành"; phiếu vẫn lập được và được ghi là có tính phí (`warranty_status = HET_BAO_HANH`).
+- **AC3 (ngoại lệ).** GIVEN thiết bị không có ngày mua, WHEN tiếp nhận, THEN hệ thống hiển thị "Chưa xác minh bảo hành", vẫn cho lập phiếu và đánh dấu phiếu chờ Quản lý trung tâm quyết định (`warranty_status = CHUA_XAC_MINH`).
 
 #### US5
 
@@ -140,12 +149,12 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 | QT-01 | Số điện thoại khách là duy nhất; nhập số đã tồn tại thì hiển thị hồ sơ có sẵn, không tạo mới.                                                                                        | FR1, FR2         |
 | QT-02 | Số điện thoại được chuẩn hóa về 10 chữ số bắt đầu bằng 0 (chấp nhận +84…, 84…, dấu cách, dấu chấm).                                                                                  | FR1, FR2         |
 | QT-03 | Thiết bị xác định duy nhất bằng serial/IMEI; một thiết bị chỉ thuộc một khách tại một thời điểm.                                                                                     | FR4, FR6         |
-| QT-04 | Hạn cam kết: Cao 24 giờ, Trung bình 72 giờ, Thấp 120 giờ; chỉ tính thứ Hai đến thứ Bảy.                                                                                              | FR9              |
-| QT-05 | Còn bảo hành nếu (ngày tiếp nhận − ngày mua) ≤ số tháng bảo hành; thiếu ngày mua thì "chưa xác minh bảo hành", cần quản lý quyết định (chức năng quyết định nằm ngoài phạm vi, W12). | FR5              |
+| QT-04 | Hạn cam kết: Cao 24 giờ, Trung bình 72 giờ, Thấp 120 giờ; chỉ tính thứ Hai đến thứ Bảy (đếm đủ số giờ trong các ngày thứ Hai–thứ Bảy, theo giờ Việt Nam; cách đếm này cho cùng kết quả với FR9).                                                                                              | FR9              |
+| QT-05 | Còn bảo hành nếu (ngày tiếp nhận − ngày mua) ≤ số tháng bảo hành, tức ngày tiếp nhận ≤ ngày hết hạn = ngày mua cộng số tháng bảo hành (tháng đích không có ngày đó thì lấy ngày cuối tháng, ví dụ 31/01 + 1 tháng = 28/02 hoặc 29/02); ngày tính theo giờ Việt Nam. Thiếu ngày mua thì "chưa xác minh bảo hành", cần quản lý quyết định (chức năng quyết định nằm ngoài phạm vi, W12). Tình trạng này được lưu vào phiếu tại lúc lập: hết bảo hành = có tính phí, chưa xác minh bảo hành = chờ quản lý quyết định. | FR5              |
 | QT-06 | Mọi lần chuyển trạng thái đều phải ghi vào lịch sử; trong phạm vi L2, phiếu mới lập ở trạng thái MỚI và ghi dòng lịch sử đầu tiên.                                                   | FR6              |
-| QT-13 | Không xóa vật lý phiếu, đơn hàng, hồ sơ khách; chỉ đánh dấu ngừng sử dụng.                                                                                                           | Tất cả           |
-| QT-14 | Nhân viên chỉ xem dữ liệu của trung tâm mình; quản lý xem toàn bộ đơn vị phụ trách.                                                                                                  | FR10, FR11, NFR2 |
-| QT-15 | Số điện thoại hiển thị dạng che với mọi vai trò trừ Quản lý và Ban giám đốc.                                                                                                         | FR1, FR10, NFR2  |
+| QT-13 | Không xóa vật lý phiếu, đơn hàng, hồ sơ khách và danh mục (sản phẩm, nhóm sự cố); chỉ đánh dấu ngừng sử dụng.                                                                         | Tất cả, HT2      |
+| QT-14 | Nhân viên chỉ xem phiếu của trung tâm mình; quản lý xem toàn bộ phiếu của trung tâm mình phụ trách (trong L2 mỗi quản lý chỉ thuộc một trung tâm). Khách hàng và thiết bị là dữ liệu dùng chung toàn công ty. | FR10, FR11, NFR2 |
+| QT-15 | Số điện thoại hiển thị dạng che với mọi vai trò trừ Quản lý và Ban giám đốc (vai trò Ban giám đốc không có trong phạm vi L2, nên trong L2 chỉ Quản lý trung tâm thấy số đầy đủ).                      | FR1, FR10, NFR2  |
 
 ---
 
@@ -164,8 +173,10 @@ Nhân viên tiếp nhận tra cứu khách theo số điện thoại, ghi nhận
 | FR9   | Tự sinh hạn cam kết theo mức ưu tiên                              | US5        | UC5      | MUST   | ticket                                                            | M1       |
 | FR10  | Danh sách phiếu của trung tâm, sắp theo hạn cam kết               | US7        | UC6      | SHOULD | ticket, customer, device, product, issue_category, service_center | M3       |
 | FR11  | Đánh dấu phiếu quá hạn                                            | US7        | UC6      | SHOULD | ticket                                                            | M3       |
+| HT1   | Đăng nhập, đăng xuất bằng tài khoản mẫu                           | —          | —        | (hỗ trợ) | employee, service_center                                         | Trang đăng nhập |
+| HT2   | Quản lý danh mục sản phẩm, nhóm sự cố (ngừng dùng thay cho xóa)   | —          | —        | (hỗ trợ) | product, issue_category                                           | — (chỉ API) |
 
-Ghi chú: service_center và employee là bảng dùng chung, chỉ dựng tối thiểu để tham chiếu: trung tâm tiếp nhận của phiếu, người ghi lịch sử trạng thái và tài khoản đăng nhập mẫu (W13). Các mục WON'T (W1–W13) không có dòng trong bảng này.
+Ghi chú: service_center và employee là bảng dùng chung, chỉ dựng tối thiểu để tham chiếu: trung tâm tiếp nhận của phiếu, người ghi lịch sử trạng thái và tài khoản đăng nhập mẫu (W13). HT1, HT2 là yêu cầu hỗ trợ (Mục 3.1a), không có User Story và use case. Các mục WON'T (W1–W13) không có dòng trong bảng này.
 
 ---
 
