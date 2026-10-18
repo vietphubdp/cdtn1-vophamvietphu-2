@@ -28,7 +28,7 @@
 
 - Phạm vi: hợp đồng này áp dụng cho các đường dẫn `/api/*`. Các trang M1–M3 và trang đăng nhập do máy chủ render bằng EJS và trả HTML; dữ liệu trên trang được lấy và gửi qua các API dưới đây bằng lớp client `api-client.js`.
 - Định dạng trao đổi: JSON, mã hóa UTF-8. Yêu cầu có body gửi kèm header `Content-Type: application/json`.
-- Xác thực: sau khi đăng nhập (endpoint 9), máy chủ cấp JWT trong cookie `HttpOnly; SameSite=Strict`; trình duyệt tự gửi cookie ở mọi yêu cầu tiếp theo. JWT chứa mã nhân viên, vai trò (`TIEP_NHAN` hoặc `QUAN_LY_TRUNG_TAM`) và trung tâm của người dùng. Mọi endpoint trừ endpoint 9 và 10 trả `401` nếu thiếu hoặc hết hạn JWT.
+- Xác thực: sau khi đăng nhập (endpoint 9), máy chủ cấp JWT trong cookie `HttpOnly; SameSite=Strict`; trình duyệt tự gửi cookie ở mọi yêu cầu tiếp theo. JWT chứa mã nhân viên, họ tên, vai trò (`TIEP_NHAN` hoặc `QUAN_LY_TRUNG_TAM`), mã và tên trung tâm của người dùng (tên trung tâm dùng cho thanh tiêu đề các trang, không phải tra lại CSDL). Mọi endpoint trừ endpoint 9 và 10 trả `401` nếu thiếu hoặc hết hạn JWT.
 - Tên trường dùng snake_case, trùng tên cột trong cơ sở dữ liệu (ERD) để dễ truy vết.
 - Thời gian dùng chuẩn ISO 8601 kèm múi giờ, ví dụ `2026-10-08T14:30:00+07:00`; ngày dùng `YYYY-MM-DD`. Mọi quy tắc theo ngày (thứ trong tuần ở QT-04, ngày hết bảo hành ở QT-05, ngày mua không ở tương lai, năm trong mã phiếu) tính theo giờ Việt Nam (UTC+7), không theo giờ của máy chủ.
 - Số điện thoại nhận vào ở nhiều dạng (QT-02), lưu và trả về dạng 10 chữ số. Với vai trò Tiếp nhận, mọi số điện thoại trả về đều ở dạng che (`090****567`), kể cả trong response của endpoint 3; chỉ vai trò Quản lý nhận số đầy đủ (NFR2, QT-15).
@@ -250,7 +250,8 @@ Lọc theo trung tâm trong JWT (QT-14), sắp theo `due_date` tăng dần rồi
     "employee_id": 7,
     "full_name": "Trần Thị Lan",
     "role": "TIEP_NHAN",
-    "center_id": 2
+    "center_id": 2,
+    "center_name": "Trung tâm bảo hành Quận 10"
 }
 ```
 
@@ -268,7 +269,7 @@ Hai danh mục dùng cùng một khuôn:
 | --- | --- | --- |
 | Đọc | `GET /api/products` (`?include_inactive=true` nếu là Quản lý) | 200 `{ "items": [ { "product_id": 5, "product_name": "Oppo A78", "default_warranty_months": 12, "is_active": true } ], "total": 24 }` |
 | Thêm | `POST /api/products` body `{ "product_name": "Oppo A79", "default_warranty_months": 18 }` | 201, trả bản ghi vừa tạo |
-| Sửa | `PUT /api/products/5` body gửi đủ các trường như khi thêm, có thể kèm `"is_active": true` để dùng lại | 200, trả bản ghi sau khi sửa |
+| Sửa | `PUT /api/products/5` body gửi đủ `product_name` và `default_warranty_months` (cả hai bắt buộc ở `PUT`), có thể kèm `"is_active": true` để dùng lại; vắng `is_active` thì giữ nguyên | 200, trả bản ghi sau khi sửa |
 | Ngừng dùng | `DELETE /api/products/5` | 200, trả bản ghi với `"is_active": false` |
 
 Nhóm sự cố: thay đường dẫn bằng `/api/issue-categories`, trường là `category_name`, `default_priority`, `is_active`.
@@ -305,6 +306,15 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 | email     | Không    | Địa chỉ thư điện tử hợp lệ, tối đa 120 ký tự                    | Email không hợp lệ                      |
 | address   | Không    | Chuỗi, tối đa 255 ký tự                                         | Địa chỉ tối đa 255 ký tự                |
 
+**Chuẩn hóa số điện thoại (QT-02)** — áp cho `phone` ở endpoint 1 và 3. Thứ tự: bỏ dấu cách và dấu chấm → nếu bắt đầu bằng `+84` hoặc `84` và phần còn lại đủ 9 chữ số thì thay tiền tố bằng `0` → kết quả phải đúng 10 chữ số, bắt đầu bằng `0`. Ký tự khác (gạch ngang, ngoặc, chữ cái) không được chấp nhận. Lỗi validation được gom cùng các trường khác trong một response 400.
+
+| Nhập vào | Kết quả |
+| --- | --- |
+| `0901234567`, `0901 234 567`, `090.123.4567` | `0901234567` |
+| `+84901234567`, `+84 90 123 4567`, `84901234567` | `0901234567` |
+| `090123456` (9 số), `09012345678` (11 số), `901234567` (thiếu 0 đầu) | 400 |
+| `0901-234-567`, `(+84) 901234567`, `090abc4567` | 400 |
+
 **`POST /api/customers/{id}/devices`**
 
 | Trường          | Bắt buộc | Kiểu / ràng buộc                                                              | Thông báo lỗi khi vi phạm                |
@@ -320,9 +330,9 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 | ----------- | -------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | customer_id | Có       | Số nguyên dương, phải tồn tại trong bảng customer (không tồn tại → 404)                              | Không tìm thấy khách hàng              |
 | device_id   | Có       | Số nguyên dương, phải tồn tại (→ 404) và thuộc về `customer_id` (QT-03, → 422)                        | Thiết bị không thuộc khách hàng này    |
-| issue_desc  | Có       | Chuỗi, độ dài 10–2000 ký tự                                                                           | Mô tả lỗi phải có từ 10 đến 2000 ký tự |
-| category_id | Không    | Số nguyên dương, phải tồn tại và đang sử dụng (→ 400); để trống nghĩa là chưa phân loại               | Nhóm sự cố không hợp lệ                |
-| priority    | Không    | Một trong CAO / TRUNG_BINH / THAP; mặc định theo nhóm, Trung bình nếu chưa có nhóm                    | Mức ưu tiên không hợp lệ               |
+| issue_desc  | Có       | Chuỗi, bỏ khoảng trắng đầu cuối rồi mới đếm, độ dài 10–2000 ký tự; lưu bản đã bỏ khoảng trắng         | Mô tả lỗi phải có từ 10 đến 2000 ký tự |
+| category_id | Không    | Số nguyên dương, phải tồn tại và đang sử dụng (→ 400); vắng hoặc `null` nghĩa là chưa phân loại; chuỗi rỗng hay giá trị khác → 400 | Nhóm sự cố không hợp lệ                |
+| priority    | Không    | Một trong CAO / TRUNG_BINH / THAP; vắng hoặc `null` thì mặc định theo nhóm, Trung bình nếu chưa có nhóm; chuỗi rỗng hay giá trị khác → 400 | Mức ưu tiên không hợp lệ               |
 | (hệ thống)  | —        | `center_id` lấy từ JWT của nhân viên, không nhận từ body; `Idempotency-Key` là UUID bắt buộc ở header | Thiếu khóa chống trùng                 |
 
 **`GET /api/tickets`**
@@ -339,7 +349,7 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 | Trường                  | Bắt buộc | Kiểu / ràng buộc                              | Thông báo lỗi khi vi phạm                     |
 | ----------------------- | -------- | --------------------------------------------- | --------------------------------------------- |
 | product_name            | Có       | Chuỗi 1–120 ký tự, bỏ khoảng trắng đầu cuối; duy nhất | Tên sản phẩm phải có từ 1 đến 120 ký tự / đã tồn tại |
-| default_warranty_months | Không    | Số nguyên 1–60, mặc định 12                   | Số tháng bảo hành phải từ 1 đến 60            |
+| default_warranty_months | `POST`: không · `PUT`: có | Số nguyên 1–60; ở `POST` vắng thì mặc định 12 | Số tháng bảo hành phải từ 1 đến 60            |
 | is_active               | Không    | Chỉ ở `PUT`, kiểu boolean                     | Trạng thái sử dụng không hợp lệ               |
 
 **`POST` / `PUT /api/issue-categories`**
