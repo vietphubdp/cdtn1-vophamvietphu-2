@@ -1,0 +1,14 @@
+CLAUDE.md
+docs/bt2-checklist.md
+docs/plan.md
+
+# Thư viện, cấu hình bí mật, kết quả sinh tự động
+node_modules/
+.env
+coverage/
+*.log
+
+# Dữ liệu lớn, dữ liệu thật: để trong data/raw/; chỉ commit mẫu nhỏ ở data/
+data/raw/
+data/**/*.zip
+data/**/*.dump
