@@ -2,13 +2,17 @@
 
 const { loadConfig } = require('./config');
 const { createPool, createTransactionRunner } = require('./repositories/db');
+const { createEmployeeRepository } = require('./repositories/EmployeeRepository');
 const { createApp } = require('./app');
 
 const config = loadConfig();
 const pool = createPool(config.db);
 
 const app = createApp({
-    repositories: {},
+    repositories: {
+        employee: createEmployeeRepository(pool),
+    },
+    jwt: config.jwt,
     withTransaction: createTransactionRunner(pool),
 });
 
