@@ -1,0 +1,67 @@
+/* Kiểu chung tối giản cho các trang EJS. */
+:root {
+    --color-text: #1f2933;
+    --color-muted: #616e7c;
+    --color-border: #cbd2d9;
+    --color-bg: #f5f7fa;
+    --color-primary: #1d4ed8;
+    --color-error: #b91c1c;
+    --color-error-bg: #fdecec;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color: var(--color-text);
+    background: var(--color-bg);
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card {
+    max-width: 960px;
+    margin: 24px auto;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+}
+
+.card--narrow { max-width: 400px; margin-top: 80px; }
+.card__title { margin: 0 0 20px; font-size: 1.15rem; }
+
+.field { margin-bottom: 16px; }
+.field label { display: block; margin-bottom: 4px; font-weight: 600; }
+.field input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    font: inherit;
+}
+.field__error { margin: 4px 0 0; min-height: 1em; color: var(--color-error); font-size: 0.875rem; }
+
+.alert { padding: 8px 12px; border-radius: 4px; }
+.alert--error { color: var(--color-error); background: var(--color-error-bg); border: 1px dashed var(--color-error); }
+
+.button {
+    padding: 8px 16px;
+    border: 1px solid var(--color-primary);
+    border-radius: 4px;
+    color: #fff;
+    background: var(--color-primary);
+    font: inherit;
+    cursor: pointer;
+}
+.button:disabled { opacity: 0.6; cursor: wait; }
+.button--secondary { color: var(--color-primary); background: #fff; }

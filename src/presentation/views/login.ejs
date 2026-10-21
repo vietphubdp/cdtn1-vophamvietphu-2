@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <%- include('partials/head') %>
+    <title>Đăng nhập · Smart CRM Mekong Mobile</title>
+    <script src="/public/js/login.js" defer></script>
+</head>
+<body>
+<%# Trang đăng nhập – HT1 (bổ sung BT2) · API 9, theo docs/wireframe.drawio. %>
+<main class="card card--narrow">
+    <h1 class="card__title">Smart CRM Mekong Mobile · Tiếp nhận bảo hành</h1>
+
+    <form id="login-form" novalidate>
+        <div class="field">
+            <label for="username">(1) Tên đăng nhập *</label>
+            <input id="username" name="username" type="text" autocomplete="username" placeholder="lan.q10" required>
+            <p class="field__error" data-error-for="username"></p>
+        </div>
+        <div class="field">
+            <label for="password">(2) Mật khẩu *</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required>
+            <p class="field__error" data-error-for="password"></p>
+        </div>
+
+        <p class="alert alert--error" id="login-error" hidden></p>
+
+        <button type="submit" class="button" id="login-button">Đăng nhập</button>
+    </form>
+</main>
+</body>
+</html>

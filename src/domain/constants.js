@@ -7,6 +7,12 @@ const Role = Object.freeze({
     QUAN_LY_TRUNG_TAM: 'QUAN_LY_TRUNG_TAM',
 });
 
+// Tên vai trò hiển thị trên thanh tiêu đề (wireframe: "Trần Thị Lan (Tiếp nhận)").
+const RoleLabel = Object.freeze({
+    [Role.TIEP_NHAN]: 'Tiếp nhận',
+    [Role.QUAN_LY_TRUNG_TAM]: 'Quản lý trung tâm',
+});
+
 const Priority = Object.freeze({
     CAO: 'CAO',
     TRUNG_BINH: 'TRUNG_BINH',
@@ -29,4 +35,4 @@ const WarrantyStatus = Object.freeze({
     CHUA_XAC_MINH: 'CHUA_XAC_MINH',
 });
 
-module.exports = { Role, Priority, TicketStatus, WarrantyStatus };
+module.exports = { Role, RoleLabel, Priority, TicketStatus, WarrantyStatus };

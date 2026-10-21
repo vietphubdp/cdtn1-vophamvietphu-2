@@ -1,0 +1,7 @@
+<%# Thanh tiêu đề chung M1–M3 (wireframe, viền tím BT2): tên trung tâm · người dùng (vai trò) · Đăng xuất (API 10).
+    Dữ liệu lấy từ JWT (D5). Liên kết M1/M3 thêm ở GĐ 7–8; Quản lý không có liên kết M1. %>
+<header class="topbar">
+    <span class="topbar__who"><%= caller.center_name %> · <%= caller.full_name %> (<%= roleLabel %>)</span>
+    <button type="button" class="button button--secondary" id="logout-button">Đăng xuất</button>
+</header>
+<script src="/public/js/header.js" defer></script>
