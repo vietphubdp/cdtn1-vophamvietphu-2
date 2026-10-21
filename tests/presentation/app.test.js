@@ -5,22 +5,23 @@ const request = require('supertest');
 const { createApp } = require('../../src/app');
 const { AppError, ErrorCode } = require('../../src/errors/AppError');
 const { createErrorMiddleware } = require('../../src/presentation/controllers/ErrorMapper');
+const { TEST_PASSWORD, createSilentLogger, createTestDeps } = require('../helpers/fakeAuth');
 
 // Test qua HTTP với createApp(deps), không cần CSDL (D4).
-function createSilentLogger() {
-    return { error: jest.fn(), warn: jest.fn(), info: jest.fn(), log: jest.fn() };
-}
 
 describe('createApp – khung ứng dụng', () => {
     test('A6 smoke test: GET /health → 200 { status: "ok" }', async () => {
-        const res = await request(createApp({ logger: createSilentLogger() })).get('/health');
+        const res = await request(createApp(createTestDeps())).get('/health');
 
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ status: 'ok' });
     });
 
-    test('TĐ-06 dữ liệu sai: endpoint /api không tồn tại → 404 đúng cấu trúc lỗi', async () => {
-        const res = await request(createApp({ logger: createSilentLogger() })).get('/api/khong-co');
+    test('TĐ-06 dữ liệu sai: endpoint /api không tồn tại (đã đăng nhập) → 404 đúng cấu trúc lỗi', async () => {
+        const agent = request.agent(createApp(createTestDeps()));
+        await agent.post('/api/auth/login').send({ username: 'lan.q10', password: TEST_PASSWORD }).expect(200);
+
+        const res = await agent.get('/api/khong-co');
 
         expect(res.status).toBe(404);
         expect(res.body.error.code).toBe(ErrorCode.NOT_FOUND);
@@ -29,7 +30,7 @@ describe('createApp – khung ứng dụng', () => {
     test('TĐ-06 dữ liệu sai: body JSON hỏng → 400, không ghi log mức error (lỗi người dùng)', async () => {
         const logger = createSilentLogger();
 
-        const res = await request(createApp({ logger }))
+        const res = await request(createApp(createTestDeps({ logger })))
             .post('/api/khong-co')
             .set('Content-Type', 'application/json')
             .send('{"phone": ');
