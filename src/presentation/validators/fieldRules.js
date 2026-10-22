@@ -34,4 +34,22 @@ function throwIfAnyField(fields, message) {
     }
 }
 
-module.exports = { readBody, isAbsent, charLength, toTrimmedName, throwIfAnyField };
+/**
+ * Mã trong đường dẫn `/{id}`: số nguyên dương trong giới hạn của cột khóa.
+ * Sai định dạng thì chắc chắn không có bản ghi nào → NOT_FOUND (contract chỉ liệt kê 404
+ * cho trường hợp này), đồng thời không gửi giá trị lạ xuống CSDL.
+ *
+ * @param {string} raw   giá trị trong đường dẫn
+ * @param {number} max   giá trị lớn nhất của cột khóa
+ * @param {string} label tên bản ghi trong thông báo: 'sản phẩm', 'khách hàng'…
+ */
+function parsePathId(raw, max, label) {
+    const text = String(raw);
+    const id = /^[1-9][0-9]*$/.test(text) ? Number(text) : NaN;
+    if (!Number.isSafeInteger(id) || id > max) {
+        throw new AppError(ErrorCode.NOT_FOUND, `Không tìm thấy ${label} với mã đã gửi. Mã phải là số nguyên dương.`);
+    }
+    return id;
+}
+
+module.exports = { readBody, isAbsent, charLength, toTrimmedName, throwIfAnyField, parsePathId };

@@ -1,8 +1,7 @@
 'use strict';
 
-const { AppError, ErrorCode } = require('../../errors/AppError');
 const { Priority, WARRANTY_MONTHS_MIN, WARRANTY_MONTHS_MAX } = require('../../domain/constants');
-const { readBody, isAbsent, toTrimmedName, throwIfAnyField } = require('./fieldRules');
+const { readBody, isAbsent, toTrimmedName, throwIfAnyField, parsePathId } = require('./fieldRules');
 
 // Giới hạn theo db/schema.sql và api-contract mục 5.
 const PRODUCT_NAME_MAX = 120; // product.product_name VARCHAR(120)
@@ -83,20 +82,6 @@ function readIsActive(input, fields, result) {
     else result.is_active = input.is_active;
 }
 
-/**
- * Mã trong đường dẫn `/{id}`: số nguyên dương trong giới hạn của cột khóa.
- * Sai định dạng thì chắc chắn không có bản ghi nào → NOT_FOUND (contract endpoint 13, 14, 16, 17
- * chỉ liệt kê 404 cho trường hợp này), đồng thời không gửi giá trị lạ xuống CSDL.
- */
-function parseId(raw, max, label) {
-    const text = String(raw);
-    const id = /^[1-9][0-9]*$/.test(text) ? Number(text) : NaN;
-    if (!Number.isSafeInteger(id) || id > max) {
-        throw new AppError(ErrorCode.NOT_FOUND, `Không tìm thấy ${label} với mã đã gửi. Mã phải là số nguyên dương.`);
-    }
-    return id;
-}
-
 /** `?include_inactive=true` (đúng chữ "true") mới tính; giá trị khác coi như không gửi. */
 function parseIncludeInactive(query) {
     return Boolean(query) && query.include_inactive === 'true';
@@ -107,8 +92,9 @@ module.exports = {
     validateProductUpdate: (body) => validateProduct(body, { isUpdate: true }),
     validateIssueCategoryCreate: (body) => validateIssueCategory(body, { isUpdate: false }),
     validateIssueCategoryUpdate: (body) => validateIssueCategory(body, { isUpdate: true }),
-    parseProductId: (raw) => parseId(raw, PRODUCT_ID_MAX, 'sản phẩm'),
-    parseIssueCategoryId: (raw) => parseId(raw, CATEGORY_ID_MAX, 'nhóm sự cố'),
+    // Mã sai định dạng → NOT_FOUND (contract endpoint 13, 14, 16, 17 chỉ liệt kê 404).
+    parseProductId: (raw) => parsePathId(raw, PRODUCT_ID_MAX, 'sản phẩm'),
+    parseIssueCategoryId: (raw) => parsePathId(raw, CATEGORY_ID_MAX, 'nhóm sự cố'),
     parseIncludeInactive,
     MESSAGES,
 };
