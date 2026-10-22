@@ -7,6 +7,9 @@ const { createErrorMiddleware } = require('./presentation/controllers/ErrorMappe
 const { createAuthService } = require('./services/AuthService');
 const { createAuthController } = require('./presentation/controllers/AuthController');
 const { createPageController } = require('./presentation/controllers/PageController');
+const { createCatalogService } = require('./services/CatalogService');
+const { createProductController } = require('./presentation/controllers/ProductController');
+const { createCategoryController } = require('./presentation/controllers/CategoryController');
 const {
     createApiAuthMiddleware,
     createPageAuthMiddleware,
@@ -17,7 +20,7 @@ const {
  * `deps` cho phép test truyền repository giả, không cần CSDL (D4).
  *
  * @param {object} deps
- * @param {object} deps.repositories     repository thật hoặc giả: { employee }
+ * @param {object} deps.repositories     repository thật hoặc giả: { employee, product, issueCategory }
  * @param {object} deps.jwt              { secret, expiresIn }
  * @param {Function} [deps.withTransaction] helper giao dịch (dùng từ giai đoạn 5)
  * @param {Function} [deps.now]          đồng hồ, mặc định () => new Date(); test truyền giờ cố định
@@ -29,8 +32,14 @@ function createApp(deps) {
     const { repositories } = deps;
 
     const authService = createAuthService({ employeeRepository: repositories.employee, jwt: deps.jwt });
+    const catalogService = createCatalogService({
+        productRepository: repositories.product,
+        issueCategoryRepository: repositories.issueCategory,
+    });
 
     const authController = createAuthController({ authService, now });
+    const productController = createProductController({ catalogService });
+    const categoryController = createCategoryController({ catalogService });
     const pageController = createPageController({ authService, now });
     const requireApiLogin = createApiAuthMiddleware({ authService, now });
     const requirePageLogin = createPageAuthMiddleware({ authService, now });
@@ -59,6 +68,18 @@ function createApp(deps) {
 
     // Mọi /api/* còn lại cần JWT hợp lệ; thiếu hoặc hết hạn → 401.
     app.use('/api', requireApiLogin);
+
+    // Danh mục nhóm sự cố: API 6, 15–17 (HT2). Không có xóa vật lý: DELETE = ngừng dùng (QT-13).
+    app.get('/api/issue-categories', categoryController.list);
+    app.post('/api/issue-categories', categoryController.create);
+    app.put('/api/issue-categories/:id', categoryController.update);
+    app.delete('/api/issue-categories/:id', categoryController.deactivate);
+
+    // Danh mục sản phẩm: API 11–14 (HT2).
+    app.get('/api/products', productController.list);
+    app.post('/api/products', productController.create);
+    app.put('/api/products/:id', productController.update);
+    app.delete('/api/products/:id', productController.deactivate);
 
     // Đường dẫn /api/* không tồn tại → lỗi đúng cấu trúc của contract.
     app.use('/api', (req, res, next) => {

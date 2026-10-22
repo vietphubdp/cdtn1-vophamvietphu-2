@@ -1,6 +1,7 @@
 'use strict';
 
 const { Pool, types } = require('pg');
+const { DuplicateKeyError } = require('../errors/DuplicateKeyError');
 
 // Kiểu DATE (OID 1082) đọc ra nguyên chuỗi 'YYYY-MM-DD'. Mặc định `pg` đổi thành Date
 // lúc 00:00 giờ máy, nên máy chấm không ở UTC+7 sẽ lệch ngày mua (QT-05).
@@ -46,4 +47,19 @@ function createTransactionRunner(pool) {
     };
 }
 
-module.exports = { createPool, createTransactionRunner };
+// Mã SQLSTATE của PostgreSQL khi vi phạm ràng buộc UNIQUE.
+const PG_UNIQUE_VIOLATION = '23505';
+
+/**
+ * Dùng trong `.catch(...)` của repository: lỗi trùng UNIQUE → DuplicateKeyError,
+ * lỗi khác ném lại nguyên vẹn. Nhờ vậy hai yêu cầu ghi cùng tên gửi đồng thời
+ * vẫn nhận lỗi trùng đúng nghĩa thay vì 500.
+ */
+function rethrowAsDuplicateKey(err) {
+    if (err && err.code === PG_UNIQUE_VIOLATION) {
+        throw new DuplicateKeyError(err.constraint);
+    }
+    throw err;
+}
+
+module.exports = { createPool, createTransactionRunner, rethrowAsDuplicateKey };

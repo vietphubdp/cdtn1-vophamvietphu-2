@@ -35,4 +35,21 @@ const WarrantyStatus = Object.freeze({
     CHUA_XAC_MINH: 'CHUA_XAC_MINH',
 });
 
-module.exports = { Role, RoleLabel, Priority, TicketStatus, WarrantyStatus };
+// Số tháng bảo hành mặc định khi thêm sản phẩm mà không gửi default_warranty_months
+// (api-contract mục 5, khớp DEFAULT 12 của cột product.default_warranty_months).
+const DEFAULT_WARRANTY_MONTHS = 12;
+
+// Giới hạn số tháng bảo hành (CHECK ... BETWEEN 1 AND 60 trong db/schema.sql).
+const WARRANTY_MONTHS_MIN = 1;
+const WARRANTY_MONTHS_MAX = 60;
+
+module.exports = {
+    Role,
+    RoleLabel,
+    Priority,
+    TicketStatus,
+    WarrantyStatus,
+    DEFAULT_WARRANTY_MONTHS,
+    WARRANTY_MONTHS_MIN,
+    WARRANTY_MONTHS_MAX,
+};
