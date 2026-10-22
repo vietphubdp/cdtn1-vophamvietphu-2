@@ -24,6 +24,18 @@ function createProductRepository(pool) {
             return result.rows;
         },
 
+        /** Một sản phẩm theo mã, kể cả đã ngừng dùng; không có → null. */
+        async findById(productId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT ${PRODUCT_COLUMNS}
+                   FROM product
+                  WHERE product_id = $1`,
+                [productId],
+            );
+            return result.rows[0] || null;
+        },
+
         /** Thêm một dòng, trả dòng vừa tạo. Tên trùng → DuplicateKeyError. */
         async create({ product_name, default_warranty_months }, tx) {
             const db = tx || pool;

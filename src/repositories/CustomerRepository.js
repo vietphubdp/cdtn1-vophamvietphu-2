@@ -23,6 +23,18 @@ function createCustomerRepository(pool) {
             return result.rows[0] || null;
         },
 
+        /** Tìm theo mã khách; không có → null. */
+        async findById(customerId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT ${CUSTOMER_COLUMNS}
+                   FROM customer
+                  WHERE customer_id = $1`,
+                [customerId],
+            );
+            return result.rows[0] || null;
+        },
+
         /**
          * Thêm một dòng, trả dòng vừa tạo (created_at là Date do CSDL đặt).
          * Số điện thoại trùng UNIQUE → DuplicateKeyError.

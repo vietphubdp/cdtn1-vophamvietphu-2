@@ -6,6 +6,7 @@ const { createEmployeeRepository } = require('./repositories/EmployeeRepository'
 const { createProductRepository } = require('./repositories/ProductRepository');
 const { createIssueCategoryRepository } = require('./repositories/IssueCategoryRepository');
 const { createCustomerRepository } = require('./repositories/CustomerRepository');
+const { createDeviceRepository } = require('./repositories/DeviceRepository');
 const { createApp } = require('./app');
 
 const config = loadConfig();
@@ -17,6 +18,7 @@ const app = createApp({
         product: createProductRepository(pool),
         issueCategory: createIssueCategoryRepository(pool),
         customer: createCustomerRepository(pool),
+        device: createDeviceRepository(pool),
     },
     jwt: config.jwt,
     withTransaction: createTransactionRunner(pool),

@@ -18,4 +18,16 @@ function toVietnamIsoString(date) {
     return shifted.toISOString().slice(0, 19) + VIETNAM_OFFSET_SUFFIX;
 }
 
-module.exports = { toVietnamIsoString, VIETNAM_OFFSET_MS };
+/**
+ * Ngày theo giờ Việt Nam của một thời điểm, dạng 'YYYY-MM-DD' (cùng dạng kiểu DATE của `pg`).
+ * Ví dụ 2026-10-08T17:30:00Z là 00:30 ngày 09/10 ở Việt Nam → '2026-10-09'.
+ * Dùng cho "hôm nay" ở QT-05 và "ngày mua không ở tương lai" (api-contract mục 2).
+ *
+ * @param {Date} date
+ * @returns {string}
+ */
+function toVietnamDateString(date) {
+    return toVietnamIsoString(date).slice(0, 10);
+}
+
+module.exports = { toVietnamIsoString, toVietnamDateString, VIETNAM_OFFSET_MS };

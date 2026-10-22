@@ -5,7 +5,7 @@
 //   HET  – hết hạn muộn nhất 06/2026: đã hết bảo hành;
 //   NULL – không có ngày mua: chưa xác minh.
 // Nhãn `case` chỉ để người đọc đối chiếu, không ghi vào CSDL; tình trạng thật do
-// WarrantyService tính ở giai đoạn 4.
+// WarrantyService tính (test "dữ liệu seed khớp nhãn" trong tests/services/WarrantyService.test.js).
 // Khách và sản phẩm tra theo cột UNIQUE (phone, product_name) nên không phụ thuộc mã tự tăng.
 const { CUSTOMERS } = require('./005_customer');
 const { PRODUCTS } = require('./003_product');
