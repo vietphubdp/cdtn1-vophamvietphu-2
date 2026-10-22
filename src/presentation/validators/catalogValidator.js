@@ -2,6 +2,7 @@
 
 const { AppError, ErrorCode } = require('../../errors/AppError');
 const { Priority, WARRANTY_MONTHS_MIN, WARRANTY_MONTHS_MAX } = require('../../domain/constants');
+const { readBody, isAbsent, toTrimmedName, throwIfAnyField } = require('./fieldRules');
 
 // Giới hạn theo db/schema.sql và api-contract mục 5.
 const PRODUCT_NAME_MAX = 120; // product.product_name VARCHAR(120)
@@ -20,39 +21,12 @@ const MESSAGES = Object.freeze({
 const PRODUCT_INVALID_MESSAGE = 'Thông tin sản phẩm chưa hợp lệ. Sửa các trường được đánh dấu rồi gửi lại.';
 const CATEGORY_INVALID_MESSAGE = 'Thông tin nhóm sự cố chưa hợp lệ. Sửa các trường được đánh dấu rồi gửi lại.';
 
-function readBody(body) {
-    return body !== null && typeof body === 'object' && !Array.isArray(body) ? body : {};
-}
-
-function isAbsent(value) {
-    return value === undefined || value === null;
-}
-
-/** Đếm theo ký tự như char_length của PostgreSQL (emoji tính 1, không phải 2 đơn vị UTF-16). */
-function charLength(text) {
-    return [...text].length;
-}
-
-/** Chuỗi bỏ khoảng trắng đầu cuối, dài 1..maxLength ký tự → bản đã cắt; sai → null. */
-function toTrimmedName(value, maxLength) {
-    if (typeof value !== 'string') return null;
-    const trimmed = value.trim();
-    const length = charLength(trimmed);
-    return length >= 1 && length <= maxLength ? trimmed : null;
-}
-
 function isWarrantyMonths(value) {
     return Number.isInteger(value) && value >= WARRANTY_MONTHS_MIN && value <= WARRANTY_MONTHS_MAX;
 }
 
 function isPriority(value) {
     return Object.values(Priority).includes(value);
-}
-
-function throwIfAnyField(fields, message) {
-    if (Object.keys(fields).length > 0) {
-        throw new AppError(ErrorCode.VALIDATION_FAILED, message, fields);
-    }
 }
 
 /**
