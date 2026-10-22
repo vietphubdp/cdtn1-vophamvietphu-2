@@ -10,6 +10,8 @@ const { createPageController } = require('./presentation/controllers/PageControl
 const { createCatalogService } = require('./services/CatalogService');
 const { createProductController } = require('./presentation/controllers/ProductController');
 const { createCategoryController } = require('./presentation/controllers/CategoryController');
+const { createCustomerService } = require('./services/CustomerService');
+const { createCustomerController } = require('./presentation/controllers/CustomerController');
 const {
     createApiAuthMiddleware,
     createPageAuthMiddleware,
@@ -20,7 +22,7 @@ const {
  * `deps` cho phép test truyền repository giả, không cần CSDL (D4).
  *
  * @param {object} deps
- * @param {object} deps.repositories     repository thật hoặc giả: { employee, product, issueCategory }
+ * @param {object} deps.repositories     repository thật hoặc giả: { employee, product, issueCategory, customer }
  * @param {object} deps.jwt              { secret, expiresIn }
  * @param {Function} [deps.withTransaction] helper giao dịch (dùng từ giai đoạn 5)
  * @param {Function} [deps.now]          đồng hồ, mặc định () => new Date(); test truyền giờ cố định
@@ -36,10 +38,12 @@ function createApp(deps) {
         productRepository: repositories.product,
         issueCategoryRepository: repositories.issueCategory,
     });
+    const customerService = createCustomerService({ customerRepository: repositories.customer });
 
     const authController = createAuthController({ authService, now });
     const productController = createProductController({ catalogService });
     const categoryController = createCategoryController({ catalogService });
+    const customerController = createCustomerController({ customerService });
     const pageController = createPageController({ authService, now });
     const requireApiLogin = createApiAuthMiddleware({ authService, now });
     const requirePageLogin = createPageAuthMiddleware({ authService, now });
@@ -68,6 +72,10 @@ function createApp(deps) {
 
     // Mọi /api/* còn lại cần JWT hợp lệ; thiếu hoặc hết hạn → 401.
     app.use('/api', requireApiLogin);
+
+    // Khách hàng: API 1, 3 (UC1, UC2). Không có sửa, xóa khách (W8).
+    app.get('/api/customers', customerController.findByPhone);
+    app.post('/api/customers', customerController.create);
 
     // Danh mục nhóm sự cố: API 6, 15–17 (HT2). Không có xóa vật lý: DELETE = ngừng dùng (QT-13).
     app.get('/api/issue-categories', categoryController.list);
