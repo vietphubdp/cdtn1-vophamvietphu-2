@@ -1,6 +1,6 @@
 'use strict';
 
-const { toVietnamIsoString } = require('../../src/services/vietnamTime');
+const { toVietnamIsoString, toVietnamDateString } = require('../../src/services/vietnamTime');
 
 // Thời gian trả ra API theo giờ Việt Nam, dạng …+07:00 (api-contract mục 2).
 
@@ -15,5 +15,16 @@ describe('toVietnamIsoString', () => {
 
     test('TĐ-06 giá trị biên: bỏ phần nghìn giây', () => {
         expect(toVietnamIsoString(new Date('2026-10-08T07:20:59.999Z'))).toBe('2026-10-08T14:20:59+07:00');
+    });
+});
+
+describe('toVietnamDateString', () => {
+    test('QT-05 luồng đúng: 07:20 UTC → ngày 08/10 theo giờ Việt Nam', () => {
+        expect(toVietnamDateString(new Date('2026-10-08T07:20:00Z'))).toBe('2026-10-08');
+    });
+
+    test('QT-05 giá trị biên: 16:59:59 UTC vẫn là ngày cũ, 17:00 UTC đã sang ngày mới', () => {
+        expect(toVietnamDateString(new Date('2026-10-08T16:59:59Z'))).toBe('2026-10-08');
+        expect(toVietnamDateString(new Date('2026-10-08T17:00:00Z'))).toBe('2026-10-09');
     });
 });

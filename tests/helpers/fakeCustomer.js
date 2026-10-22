@@ -36,6 +36,10 @@ function createFakeCustomerRepository(seedRows = TEST_CUSTOMERS) {
             const row = rows.find((r) => r.phone === phone);
             return row ? { ...row } : null;
         }),
+        findById: jest.fn(async (customerId) => {
+            const row = rows.find((r) => r.customer_id === customerId);
+            return row ? { ...row } : null;
+        }),
         create: jest.fn(async (input) => {
             if (rows.some((r) => r.phone === input.phone)) throw new DuplicateKeyError('customer_phone_key');
             const row = { customer_id: nextId++, ...input, created_at: TEST_CREATED_AT };

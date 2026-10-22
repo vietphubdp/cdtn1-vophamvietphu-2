@@ -38,6 +38,10 @@ function createInMemoryCatalogRepository({ idField, nameField, seedRows, sortBy 
                 .sort(sortBy)
                 .map((r) => ({ ...r })),
         ),
+        findById: jest.fn(async (id) => {
+            const row = rows.find((r) => r[idField] === id);
+            return row ? { ...row } : null;
+        }),
         create: jest.fn(async (input) => {
             assertNameFree(input[nameField]);
             const row = { [idField]: nextId++, ...input, is_active: true };

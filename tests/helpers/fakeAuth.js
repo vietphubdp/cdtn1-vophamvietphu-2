@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const { Role } = require('../../src/domain/constants');
 const { createFakeProductRepository, createFakeIssueCategoryRepository } = require('./fakeCatalog');
 const { createFakeCustomerRepository } = require('./fakeCustomer');
+const { createFakeDeviceRepository } = require('./fakeDevice');
 
 // Dữ liệu giả cho test đăng nhập, không cần CSDL (D4).
 const TEST_PASSWORD = 'Demo@2026';
@@ -55,6 +56,7 @@ function createTestDeps(overrides = {}) {
             product: createFakeProductRepository(),
             issueCategory: createFakeIssueCategoryRepository(),
             customer: createFakeCustomerRepository(),
+            device: createFakeDeviceRepository(),
         },
         jwt: TEST_JWT,
         logger: createSilentLogger(),
