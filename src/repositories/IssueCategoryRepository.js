@@ -24,6 +24,18 @@ function createIssueCategoryRepository(pool) {
             return result.rows;
         },
 
+        /** Một nhóm theo mã, kể cả nhóm đã ngừng dùng; không có → null. */
+        async findById(categoryId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT ${CATEGORY_COLUMNS}
+                   FROM issue_category
+                  WHERE category_id = $1`,
+                [categoryId],
+            );
+            return result.rows[0] || null;
+        },
+
         /** Thêm một dòng, trả dòng vừa tạo. Tên trùng → DuplicateKeyError. */
         async create({ category_name, default_priority }, tx) {
             const db = tx || pool;

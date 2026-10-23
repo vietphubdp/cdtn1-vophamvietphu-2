@@ -15,6 +15,8 @@ const { createCustomerController } = require('./presentation/controllers/Custome
 const { createDeviceService } = require('./services/DeviceService');
 const { createWarrantyService } = require('./services/WarrantyService');
 const { createDeviceController } = require('./presentation/controllers/DeviceController');
+const { createTicketService } = require('./services/TicketService');
+const { createTicketController } = require('./presentation/controllers/TicketController');
 const {
     createApiAuthMiddleware,
     createPageAuthMiddleware,
@@ -25,9 +27,10 @@ const {
  * `deps` cho phép test truyền repository giả, không cần CSDL (D4).
  *
  * @param {object} deps
- * @param {object} deps.repositories     repository thật hoặc giả: { employee, product, issueCategory, customer, device }
+ * @param {object} deps.repositories     repository thật hoặc giả:
+ *   { employee, product, issueCategory, customer, device, ticket, ticketStatusLog }
  * @param {object} deps.jwt              { secret, expiresIn }
- * @param {Function} [deps.withTransaction] helper giao dịch (dùng từ giai đoạn 5)
+ * @param {Function} deps.withTransaction helper giao dịch withTransaction(work) (NFR4, QT-06)
  * @param {Function} [deps.now]          đồng hồ, mặc định () => new Date(); test truyền giờ cố định
  * @param {object} [deps.logger]         mặc định console
  */
@@ -48,12 +51,21 @@ function createApp(deps) {
         productRepository: repositories.product,
     });
     const warrantyService = createWarrantyService({ deviceRepository: repositories.device });
+    const ticketService = createTicketService({
+        ticketRepository: repositories.ticket,
+        ticketStatusLogRepository: repositories.ticketStatusLog,
+        customerRepository: repositories.customer,
+        deviceRepository: repositories.device,
+        issueCategoryRepository: repositories.issueCategory,
+        withTransaction: deps.withTransaction,
+    });
 
     const authController = createAuthController({ authService, now });
     const productController = createProductController({ catalogService });
     const categoryController = createCategoryController({ catalogService });
     const customerController = createCustomerController({ customerService });
     const deviceController = createDeviceController({ deviceService, warrantyService, now });
+    const ticketController = createTicketController({ ticketService, now });
     const pageController = createPageController({ authService, now });
     const requireApiLogin = createApiAuthMiddleware({ authService, now });
     const requirePageLogin = createPageAuthMiddleware({ authService, now });
@@ -91,6 +103,9 @@ function createApp(deps) {
     app.get('/api/customers/:id/devices', deviceController.listByCustomer);
     app.post('/api/customers/:id/devices', deviceController.create);
     app.get('/api/devices/:id/warranty', deviceController.getWarranty);
+
+    // Phiếu bảo hành: API 7 (UC5). Danh sách phiếu (API 8) làm ở giai đoạn 6.
+    app.post('/api/tickets', ticketController.create);
 
     // Danh mục nhóm sự cố: API 6, 15–17 (HT2). Không có xóa vật lý: DELETE = ngừng dùng (QT-13).
     app.get('/api/issue-categories', categoryController.list);
