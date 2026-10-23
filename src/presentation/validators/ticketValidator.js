@@ -10,6 +10,11 @@ const BIGINT_ID_MAX = Number.MAX_SAFE_INTEGER; // customer_id, device_id BIGINT,
 const INT_ID_MAX = 2147483647; // category_id INT
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Phân trang API 8 (api-contract mục 2, mục 5).
+const PAGE_DEFAULT = 1;
+const SIZE_DEFAULT = 20; // FR10: 20 dòng mỗi trang
+const SIZE_MAX = 100;
+
 const MESSAGES = Object.freeze({
     customer_id: 'Mã khách hàng phải là số nguyên dương',
     device_id: 'Mã thiết bị phải là số nguyên dương',
@@ -17,9 +22,12 @@ const MESSAGES = Object.freeze({
     category_id: 'Nhóm sự cố không hợp lệ',
     priority: 'Mức ưu tiên không hợp lệ',
     idempotency_key: 'Thiếu khóa chống trùng: header Idempotency-Key phải là một UUID',
+    page: 'Trang phải là số nguyên từ 1',
+    size: `Số dòng mỗi trang phải từ 1 đến ${SIZE_MAX}`,
 });
 
 const TICKET_INVALID_MESSAGE = 'Thông tin phiếu chưa hợp lệ. Sửa các trường được đánh dấu rồi gửi lại.';
+const LIST_INVALID_MESSAGE = 'Tham số phân trang không hợp lệ';
 
 const PRIORITIES = Object.values(Priority);
 
@@ -75,4 +83,44 @@ function validateTicketCreate(body, idempotencyKeyHeader) {
     return { input, idempotencyKey: idempotencyKeyHeader.toLowerCase() };
 }
 
-module.exports = { validateTicketCreate, MESSAGES, ISSUE_DESC_MIN, ISSUE_DESC_MAX };
+/**
+ * Tham số phân trang trong query: vắng → giá trị mặc định; chuỗi chỉ gồm chữ số và nằm trong
+ * [min, max] → số; còn lại (rỗng, '1.5', '-1', 'abc', gửi hai lần thành mảng) → null.
+ */
+function toPagingNumber(value, defaultValue, min, max) {
+    if (value === undefined) return defaultValue;
+    if (typeof value !== 'string' || !/^[0-9]+$/.test(value)) return null;
+    const number = Number(value);
+    return Number.isSafeInteger(number) && number >= min && number <= max ? number : null;
+}
+
+/**
+ * API 8: `?page=&size=` (api-contract mục 5), gom đủ lỗi rồi ném một lần.
+ * page ≥ 1, mặc định 1 (trang vượt quá số phiếu vẫn hợp lệ, trả danh sách rỗng);
+ * size 1–100, mặc định 20 (FR10).
+ *
+ * @returns {{ page: number, size: number }}
+ */
+function validateTicketList(query) {
+    const raw = readBody(query);
+    const fields = {};
+
+    const page = toPagingNumber(raw.page, PAGE_DEFAULT, 1, Number.MAX_SAFE_INTEGER);
+    if (page === null) fields.page = MESSAGES.page;
+
+    const size = toPagingNumber(raw.size, SIZE_DEFAULT, 1, SIZE_MAX);
+    if (size === null) fields.size = MESSAGES.size;
+
+    throwIfAnyField(fields, LIST_INVALID_MESSAGE);
+    return { page, size };
+}
+
+module.exports = {
+    validateTicketCreate,
+    validateTicketList,
+    MESSAGES,
+    ISSUE_DESC_MIN,
+    ISSUE_DESC_MAX,
+    SIZE_DEFAULT,
+    SIZE_MAX,
+};

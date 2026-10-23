@@ -61,6 +61,42 @@ function createTicketRepository(pool) {
             );
             return result.rows[0] || null;
         },
+
+        /**
+         * Một trang phiếu của một trung tâm kèm tên khách, số điện thoại (chưa che), tên máy, serial,
+         * tên nhóm sự cố (api-contract 3.8). Sắp due_date rồi ticket_id tăng dần để phân trang ổn định;
+         * dùng index idx_ticket_center_due. Phiếu chưa phân loại có category_name = null (LEFT JOIN).
+         */
+        async listByCenter(centerId, { limit, offset }, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT t.ticket_id, t.ticket_code, c.full_name AS customer_name, c.phone,
+                        p.product_name, d.serial_no, ic.category_name, t.priority,
+                        t.warranty_status, t.status, t.received_at, t.due_date
+                   FROM ticket t
+                   JOIN customer c ON c.customer_id = t.customer_id
+                   JOIN device d ON d.device_id = t.device_id
+                   JOIN product p ON p.product_id = d.product_id
+                   LEFT JOIN issue_category ic ON ic.category_id = t.category_id
+                  WHERE t.center_id = $1
+                  ORDER BY t.due_date, t.ticket_id
+                  LIMIT $2 OFFSET $3`,
+                [centerId, limit, offset],
+            );
+            return result.rows;
+        },
+
+        /** Tổng số phiếu của một trung tâm (trường `total` của API 8). */
+        async countByCenter(centerId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT count(*) AS total
+                   FROM ticket
+                  WHERE center_id = $1`,
+                [centerId],
+            );
+            return result.rows[0].total;
+        },
     };
 }
 

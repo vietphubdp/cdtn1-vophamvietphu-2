@@ -16,6 +16,7 @@ const { createDeviceService } = require('./services/DeviceService');
 const { createWarrantyService } = require('./services/WarrantyService');
 const { createDeviceController } = require('./presentation/controllers/DeviceController');
 const { createTicketService } = require('./services/TicketService');
+const { createTicketQueryService } = require('./services/TicketQueryService');
 const { createTicketController } = require('./presentation/controllers/TicketController');
 const {
     createApiAuthMiddleware,
@@ -59,13 +60,14 @@ function createApp(deps) {
         issueCategoryRepository: repositories.issueCategory,
         withTransaction: deps.withTransaction,
     });
+    const ticketQueryService = createTicketQueryService({ ticketRepository: repositories.ticket });
 
     const authController = createAuthController({ authService, now });
     const productController = createProductController({ catalogService });
     const categoryController = createCategoryController({ catalogService });
     const customerController = createCustomerController({ customerService });
     const deviceController = createDeviceController({ deviceService, warrantyService, now });
-    const ticketController = createTicketController({ ticketService, now });
+    const ticketController = createTicketController({ ticketService, ticketQueryService, now });
     const pageController = createPageController({ authService, now });
     const requireApiLogin = createApiAuthMiddleware({ authService, now });
     const requirePageLogin = createPageAuthMiddleware({ authService, now });
@@ -104,7 +106,8 @@ function createApp(deps) {
     app.post('/api/customers/:id/devices', deviceController.create);
     app.get('/api/devices/:id/warranty', deviceController.getWarranty);
 
-    // Phiếu bảo hành: API 7 (UC5). Danh sách phiếu (API 8) làm ở giai đoạn 6.
+    // Phiếu bảo hành: API 7 lập phiếu (UC5), API 8 danh sách phiếu của trung tâm (UC6).
+    app.get('/api/tickets', ticketController.list);
     app.post('/api/tickets', ticketController.create);
 
     // Danh mục nhóm sự cố: API 6, 15–17 (HT2). Không có xóa vật lý: DELETE = ngừng dùng (QT-13).
