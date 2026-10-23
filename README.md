@@ -37,7 +37,7 @@ Các lệnh lẻ (đã gộp trong `npm run setup`):
 | Lệnh | Việc làm |
 | --- | --- |
 | `npm run db:migrate` | Tạo CSDL `DB_NAME` nếu chưa có (cần quyền CREATEDB), rồi chạy `db/schema.sql`. Mọi lệnh dùng `IF NOT EXISTS` nên chạy lại không lỗi. |
-| `npm run db:seed` | Chạy lần lượt `db/seeds/001_*.js` → `006_*.js` theo số đầu tên file, trong một giao dịch. Chèn bằng `ON CONFLICT DO NOTHING` nên chạy lại không nhân đôi (lần hai in "thêm mới 0 dòng"). |
+| `npm run db:seed` | Chạy lần lượt `db/seeds/001_*.js` → `007_*.js` theo số đầu tên file, trong một giao dịch. Chèn bằng `ON CONFLICT DO NOTHING` nên chạy lại không nhân đôi (lần hai in "thêm mới 0 dòng"). |
 | `npm start` | Chạy máy chủ không tự khởi động lại khi sửa code. |
 | `npm test` | Chạy toàn bộ test, không cần CSDL (mục 6). |
 
@@ -53,9 +53,12 @@ Dữ liệu giả lập, không phải dữ liệu thật (họ tên, số đi�
 | `issue_category` | 6 | Đúng 6 nhóm trong bảng thuật ngữ SRS: Màn hình, Pin, Sạc, Phần mềm, Nước vào, Khác |
 | `service_center` | 6 | Đúng 6 trung tâm của case study Mekong Mobile |
 | `employee` | 6 | 1 Tiếp nhận + 1 Quản lý ở mỗi trung tâm 1–3 |
-| `ticket`, `ticket_status_log` | – | Seed ở giai đoạn lập phiếu (hạn cam kết và tình trạng bảo hành phải tính bằng chính code nghiệp vụ) |
+| `ticket` | 25 | Trung tâm 1: 8 · 2: 10 · 3: 7; mỗi trung tâm đủ 3 tình trạng bảo hành; 13 phiếu quá hạn, 12 chưa quá hạn tại lúc seed; hạn cam kết và tình trạng bảo hành tính bằng chính code nghiệp vụ |
+| `ticket_status_log` | 25 | Mỗi phiếu 1 dòng lịch sử đầu tiên (trạng thái MỚI, QT-06) |
 
-Ba bảng danh mục/tổ chức ít hơn 20 dòng **có chủ ý**: số nhóm sự cố và số trung tâm là dữ kiện của nghiệp vụ, seed thêm cho đủ 20 sẽ sai case study; `employee` chỉ là tài khoản mẫu (W13). Các bảng chính (`customer`, `device`, `product`, sau này `ticket`) đủ 20–30 dòng.
+Ba bảng danh mục/tổ chức ít hơn 20 dòng **có chủ ý**: số nhóm sự cố và số trung tâm là dữ kiện của nghiệp vụ, seed thêm cho đủ 20 sẽ sai case study; `employee` chỉ là tài khoản mẫu (W13). Các bảng chính (`customer`, `device`, `product`, `ticket`) đủ 20–30 dòng.
+
+Thời điểm tiếp nhận của phiếu seed tính **lùi từ lúc chạy seed** (2 giờ đến 230 giờ trước), nên chạy ngày nào cũng có cả phiếu quá hạn lẫn chưa quá hạn để xem trên danh sách phiếu. Chạy seed lại không làm mới các phiếu đã có; muốn làm mới thì xóa CSDL rồi chạy lại `npm run setup`.
 
 ### Tài khoản demo
 
@@ -121,10 +124,50 @@ npm test                  # hiển thị số test PASS
 
 Test không cần PostgreSQL: lớp service dùng repository giả, test HTTP gọi `createApp(deps)` qua `supertest`. Tên test bắt đầu bằng mã yêu cầu (QT-xx, USx-ACy, FRx, NFRx…) để truy vết.
 
+### Kiểm bằng tay: lưu phiếu và lịch sử trong một giao dịch (NFR4)
+
+`npm test` chỉ kiểm được rằng ghi phiếu và ghi lịch sử nằm trong cùng một lần `withTransaction`. Rollback thật trên PostgreSQL kiểm bằng tay như sau (cần `npm run dev` đang chạy, đã đăng nhập `lan.q10` và lưu cookie vào `lan.txt`):
+
+1. Trong `psql` (CSDL `smart_crm_l2`), gắn trigger tạm làm bước ghi lịch sử luôn lỗi:
+
+    ```sql
+    CREATE FUNCTION nfr4_fail() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'NFR4 thu loi'; END $$;
+    CREATE TRIGGER nfr4_fail BEFORE INSERT ON ticket_status_log FOR EACH ROW EXECUTE FUNCTION nfr4_fail();
+    ```
+
+2. Lập phiếu với một khóa mới (body ghi ra file UTF-8 `ticket.json`, ví dụ `{"customer_id":1,"device_id":1,"issue_desc":"Máy không nhận sạc nữa"}`):
+
+    ```bash
+    curl -b lan.txt -H "Content-Type: application/json" -H "Idempotency-Key: 11111111-2222-4333-8444-555555555555" --data-binary @ticket.json http://localhost:3000/api/tickets
+    ```
+
+    Kết quả mong đợi: `500 INTERNAL_ERROR`, thông báo chung.
+
+3. Kiểm không có phiếu nào được lưu dở:
+
+    ```sql
+    SELECT count(*) FROM ticket WHERE idempotency_key = '11111111-2222-4333-8444-555555555555';  -- 0
+    SELECT count(*) FROM ticket t WHERE NOT EXISTS
+        (SELECT 1 FROM ticket_status_log l WHERE l.ticket_id = t.ticket_id);                  -- 0
+    ```
+
+4. Gỡ trigger rồi gửi lại đúng lệnh `curl` ở bước 2 (như nhân viên bấm "Thử lưu lại"): `201`, phiếu có đúng 1 dòng lịch sử. Gửi thêm lần nữa: `200`, cùng phiếu, không lập phiếu thứ hai.
+
+    ```sql
+    DROP TRIGGER nfr4_fail ON ticket_status_log;
+    DROP FUNCTION nfr4_fail();
+    ```
+
+Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui khi rollback); NFR4 chỉ đòi không trùng mã.
+
 ## 7. Trạng thái hiện tại
 
 - [x] Phân tích và thiết kế, nộp BT1 (buổi 6)
 - [x] Khởi tạo project, migrate + seed chạy lại được, smoke test `/health` chạy được
+- [x] Đăng nhập, đăng xuất (HT1)
+- [x] API danh mục sản phẩm và nhóm sự cố: đọc, thêm, sửa, ngừng dùng – chỉ Quản lý được ghi (HT2, API 6, 11–17)
+- [x] API khách hàng, thiết bị, tình trạng bảo hành (API 1–5)
+- [x] API lập phiếu: mã phiếu, hạn cam kết, lịch sử đầu tiên, chống lưu trùng (API 7)
 - [ ] Module tiếp nhận và lập phiếu: UC1, UC4, UC5 (MUST)
 - [ ] Module tạo khách hàng và ghi nhận thiết bị: UC2, UC3 (SHOULD)
 - [ ] Module danh sách phiếu của trung tâm: UC6 (SHOULD)
