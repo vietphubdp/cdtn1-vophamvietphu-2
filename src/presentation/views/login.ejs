@@ -5,27 +5,37 @@
     <title>Đăng nhập · Smart CRM Mekong Mobile</title>
     <script src="/public/js/login.js" defer></script>
 </head>
-<body>
-<%# Trang đăng nhập – HT1 (bổ sung BT2) · API 9, theo docs/wireframe.drawio. %>
-<main class="card card--narrow">
-    <h1 class="card__title">Smart CRM Mekong Mobile · Tiếp nhận bảo hành</h1>
-
-    <form id="login-form" novalidate>
-        <div class="field">
-            <label for="username">(1) Tên đăng nhập *</label>
-            <input id="username" name="username" type="text" autocomplete="username" placeholder="lan.q10" required>
-            <p class="field__error" data-error-for="username"></p>
-        </div>
-        <div class="field">
-            <label for="password">(2) Mật khẩu *</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required>
-            <p class="field__error" data-error-for="password"></p>
+<body class="flex min-h-dvh flex-col bg-neutral-50 font-sans text-neutral-900 antialiased">
+<%# Trang đăng nhập – HT1 (bổ sung BT2) · API 9, theo docs/wireframe.drawio. Không có sidebar (UI5). %>
+<main class="flex flex-1 items-center justify-center px-4 py-10">
+    <div class="card w-full max-w-sm">
+        <div class="mb-6 flex items-center gap-2">
+            <%- include('partials/icon', { name: 'brand', className: 'size-7' }) %>
+            <h1 class="text-xl font-semibold tracking-tight">Smart CRM Mekong Mobile · Tiếp nhận bảo hành</h1>
         </div>
 
-        <p class="alert alert--error" id="login-error" hidden></p>
+        <form id="login-form" class="space-y-4" novalidate>
+            <div>
+                <label class="label" for="username">(1) Tên đăng nhập *</label>
+                <input class="input" id="username" name="username" type="text" autocomplete="username" placeholder="lan.q10"
+                       aria-describedby="username-error" required>
+                <p class="field-error" id="username-error" data-error-for="username"></p>
+            </div>
+            <div>
+                <label class="label" for="password">(2) Mật khẩu *</label>
+                <input class="input" id="password" name="password" type="password" autocomplete="current-password"
+                       aria-describedby="password-error" required>
+                <p class="field-error" id="password-error" data-error-for="password"></p>
+            </div>
 
-        <button type="submit" class="button" id="login-button">Đăng nhập</button>
-    </form>
+            <div aria-live="polite">
+                <p class="alert-error" id="login-error" hidden></p>
+            </div>
+
+            <button type="submit" class="btn-primary w-full" id="login-button">Đăng nhập</button>
+        </form>
+    </div>
 </main>
+<%- include('partials/footer') %>
 </body>
 </html>

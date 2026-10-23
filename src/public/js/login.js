@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.querySelectorAll('[data-error-for]').forEach((el) => {
             el.textContent = '';
         });
+        form.querySelectorAll('[aria-invalid]').forEach((el) => el.removeAttribute('aria-invalid'));
         generalError.hidden = true;
         generalError.textContent = '';
     }
@@ -18,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.entries(err.fields).forEach(([name, message]) => {
             const el = form.querySelector(`[data-error-for="${name}"]`);
             if (el) el.textContent = message;
+            if (form.elements[name]) form.elements[name].setAttribute('aria-invalid', 'true');
         });
         generalError.textContent = err.message;
         generalError.hidden = false;

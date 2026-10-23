@@ -1,0 +1,24 @@
+<%# Navbar chung M1–M3 (UI5, TĐ-13): thay thanh tiêu đề của wireframe (viền tím BT2).
+    Tên trung tâm · người dùng (vai trò) · Đăng xuất (API 10); dữ liệu lấy từ JWT (D5). %>
+<header class="sticky top-0 z-20 h-16 border-b border-neutral-200 bg-white/90 backdrop-blur">
+    <div class="flex h-full items-center gap-3 px-4 sm:px-6 lg:px-8">
+        <button type="button" class="btn-icon lg:hidden" id="sidebar-open"
+                aria-controls="sidebar" aria-expanded="false" aria-label="Mở menu điều hướng">
+            <%- include('icon', { name: 'menu' }) %>
+        </button>
+        <a href="/" class="flex min-w-0 items-center gap-2 rounded-full font-semibold tracking-tight focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900">
+            <%- include('icon', { name: 'brand', className: 'size-6' }) %>
+            <span class="truncate">Smart CRM<span class="hidden sm:inline"> · Mekong Mobile</span></span>
+        </a>
+        <div class="ml-auto flex min-w-0 items-center gap-3">
+            <p class="hidden min-w-0 truncate text-sm text-neutral-500 md:block" id="navbar-who">
+                <%= caller.center_name %> · <%= caller.full_name %> (<%= roleLabel %>)
+            </p>
+            <button type="button" class="btn-outline px-3 sm:px-4" id="logout-button">
+                <%- include('icon', { name: 'logout', className: 'size-4' }) %>
+                <span>Đăng xuất</span>
+            </button>
+        </div>
+    </div>
+</header>
+<script src="/public/js/header.js" defer></script>

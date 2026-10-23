@@ -1,0 +1,134 @@
+/*
+ * Nguồn Tailwind CSS 4 (UI1). `npm run build:css` dựng ra src/public/css/app.css (không commit).
+ * Phong cách tối giản trắng đen bằng thang neutral (UI2); đỏ/cam/xanh chỉ để báo lỗi/cảnh báo/thành công.
+ * Lớp thành phần dùng chung khai báo một lần ở đây (UI3); bố cục viết lớp tiện ích trong EJS.
+ */
+@import "tailwindcss" source(none);
+
+/* Chỉ quét file giao diện; lớp gắn bằng JS phải viết đủ tên (UI3). */
+@source "../views";
+@source "../../public/js";
+
+/* UI9: phông hệ thống, có Inter trên máy thì dùng, không tải phông từ mạng. */
+@theme {
+    --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@layer components {
+    /* Thẻ */
+    .card {
+        @apply rounded-3xl border border-neutral-200 bg-white p-5 sm:p-6;
+    }
+    .card-title {
+        @apply text-lg font-medium tracking-tight;
+    }
+    .card-desc {
+        @apply text-sm text-neutral-500;
+    }
+    .tile {
+        @apply rounded-2xl bg-neutral-50 p-4;
+    }
+
+    /* Nút (UI4): viên thuốc, vòng tiêu điểm rõ (UI8) */
+    .btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-outline {
+        @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium transition-colors
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2
+            disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none;
+    }
+    .btn-primary {
+        @apply bg-neutral-900 text-white hover:bg-neutral-800;
+    }
+    .btn-secondary {
+        @apply bg-neutral-100 text-neutral-900 hover:bg-neutral-200;
+    }
+    .btn-outline {
+        @apply border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50;
+    }
+    .btn-icon {
+        @apply inline-flex size-9 items-center justify-center rounded-full text-neutral-700 hover:bg-neutral-100
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2;
+    }
+    .link {
+        @apply rounded-sm font-medium underline underline-offset-4 hover:text-neutral-600
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2;
+    }
+
+    /* Ô nhập */
+    .label {
+        @apply mb-1.5 block text-sm font-medium;
+    }
+    .input,
+    .textarea,
+    .select {
+        @apply block w-full rounded-full border-0 bg-neutral-100 px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-500
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900
+            aria-invalid:bg-red-50 aria-invalid:ring-1 aria-invalid:ring-red-500;
+    }
+    .textarea {
+        @apply rounded-2xl;
+    }
+    .select {
+        @apply appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23525252'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='m6%209%206%206%206-6'/%3E%3C/svg%3E")]
+            bg-size-[1rem] bg-position-[right_1rem_center] bg-no-repeat pr-10 disabled:opacity-60;
+    }
+    .field-error {
+        @apply mt-1.5 text-sm text-red-600 empty:hidden;
+    }
+    .hint {
+        @apply mt-1.5 text-sm text-neutral-500;
+    }
+
+    /* Nhãn trạng thái: luôn có chữ, không báo chỉ bằng màu (UI8) */
+    .badge {
+        @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    /* Thông báo: khung nét đứt như chú thích wireframe (đỏ lỗi · cam cảnh báo · xanh thành công) */
+    .alert,
+    .alert-error,
+    .alert-warning,
+    .alert-success,
+    .alert-info {
+        @apply rounded-2xl border border-dashed px-4 py-3 text-sm;
+    }
+    .alert-error {
+        @apply border-red-300 bg-red-50 text-red-700;
+    }
+    .alert-warning {
+        @apply border-amber-300 bg-amber-50 text-amber-800;
+    }
+    .alert-success {
+        @apply border-emerald-300 bg-emerald-50 text-emerald-800;
+    }
+    .alert-info {
+        @apply border-neutral-300 bg-neutral-50 text-neutral-700;
+    }
+
+    /* Bảng: đặt trong khung overflow-x-auto (UI6) */
+    .table {
+        @apply w-full border-collapse text-left text-sm;
+    }
+    .table th {
+        @apply border-b border-neutral-200 px-3 py-2.5 text-xs font-medium tracking-wider whitespace-nowrap text-neutral-500 uppercase;
+    }
+    .table td {
+        @apply border-b border-neutral-100 px-3 py-3 whitespace-nowrap;
+    }
+
+    /* Sidebar */
+    .nav-item {
+        @apply flex items-center gap-3 rounded-full px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900;
+    }
+    .nav-item[aria-current="page"] {
+        @apply bg-neutral-100 font-medium text-neutral-900;
+    }
+
+    /* Trạng thái đang tải (UI7) */
+    .skeleton {
+        @apply animate-pulse rounded-2xl bg-neutral-100 motion-reduce:animate-none;
+    }
+}

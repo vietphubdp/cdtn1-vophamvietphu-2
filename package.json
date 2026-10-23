@@ -9,7 +9,11 @@
     "node": ">=20"
   },
   "scripts": {
+    "build:css": "tailwindcss -i src/presentation/styles/tailwind.css -o src/public/css/app.css --minify",
+    "watch:css": "tailwindcss -i src/presentation/styles/tailwind.css -o src/public/css/app.css --watch",
+    "prestart": "npm run build:css",
     "start": "node src/server.js",
+    "predev": "npm run build:css",
     "dev": "node --watch src/server.js",
     "db:migrate": "node db/migrate.js",
     "db:seed": "node db/seed.js",
@@ -37,7 +41,9 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
     "jest": "^30.5.2",
-    "supertest": "^7.3.1"
+    "supertest": "^7.3.1",
+    "tailwindcss": "^4.3.3"
   }
 }

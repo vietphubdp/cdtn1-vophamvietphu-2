@@ -12,3 +12,6 @@ coverage/
 data/raw/
 data/**/*.zip
 data/**/*.dump
+
+# CSS sinh từ Tailwind bằng npm run build:css (UI1)
+src/public/css/app.css

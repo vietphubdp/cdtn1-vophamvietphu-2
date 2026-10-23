@@ -1,0 +1,33 @@
+<%# Sidebar (UI5, TĐ-13): thay hai nút "M1 Lập phiếu · M3 Danh sách" của wireframe.
+    Quản lý trung tâm không thấy mục M1 (M1, M2 chỉ dành cho Tiếp nhận). M2 không có mục riêng vì chỉ mở từ M1.
+    Từ lg: cố định bên trái; dưới lg: ngăn kéo trượt, điều khiển bằng public/js/layout.js.
+    Biến: caller, active ('M1' | 'M3'), canCreateTicket (PageController tính theo vai trò). %>
+<div class="fixed inset-0 z-30 bg-neutral-900/40 lg:hidden" id="sidebar-overlay" hidden></div>
+<aside id="sidebar" aria-label="Điều hướng"
+       class="fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 -translate-x-full flex-col border-r border-neutral-200 bg-white transition-transform motion-reduce:transition-none
+              lg:sticky lg:top-16 lg:z-10 lg:h-[calc(100dvh-4rem)] lg:translate-x-0">
+    <div class="flex h-16 items-center justify-between border-b border-neutral-200 px-4 lg:hidden">
+        <span class="font-semibold tracking-tight">Menu</span>
+        <button type="button" class="btn-icon" id="sidebar-close" aria-label="Đóng menu điều hướng">
+            <%- include('icon', { name: 'close' }) %>
+        </button>
+    </div>
+    <nav class="flex-1 space-y-6 overflow-y-auto p-4">
+        <p class="px-3 text-sm text-neutral-500 md:hidden"><%= caller.center_name %> · <%= caller.full_name %></p>
+        <% if (canCreateTicket) { %>
+        <div>
+            <p class="mb-2 px-3 text-xs font-medium tracking-wider text-neutral-500 uppercase">Tiếp nhận</p>
+            <a href="/tickets/new" class="nav-item" <%- active === 'M1' ? 'aria-current="page"' : '' %>>
+                <%- include('icon', { name: 'file-plus' }) %> Lập phiếu bảo hành
+            </a>
+        </div>
+        <% } %>
+        <div>
+            <p class="mb-2 px-3 text-xs font-medium tracking-wider text-neutral-500 uppercase">Phiếu bảo hành</p>
+            <a href="/tickets" class="nav-item" <%- active === 'M3' ? 'aria-current="page"' : '' %>>
+                <%- include('icon', { name: 'list' }) %> Danh sách phiếu
+            </a>
+        </div>
+    </nav>
+</aside>
+<script src="/public/js/layout.js" defer></script>
