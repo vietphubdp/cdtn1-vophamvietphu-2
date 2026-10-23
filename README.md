@@ -29,8 +29,10 @@ Bốn bước, mỗi bước một lệnh:
 cp .env.example .env      # rồi sửa DB_PASSWORD (và DB_USER nếu khác) cho khớp PostgreSQL trên máy
 npm install
 npm run setup             # = db:migrate + db:seed: tự tạo CSDL nếu chưa có, tạo bảng, nạp dữ liệu mẫu
-npm run dev               # mở http://localhost:3000/health → {"status":"ok"}
+npm run dev               # mở http://localhost:3000 → trang đăng nhập (kiểm nhanh: /health → {"status":"ok"})
 ```
+
+`npm run dev` và `npm start` tự dựng CSS giao diện (Tailwind CSS qua CLI, không cần mạng) trước khi chạy máy chủ. Khi sửa giao diện, chạy thêm `npm run watch:css` ở cửa sổ khác để CSS tự dựng lại.
 
 Các lệnh lẻ (đã gộp trong `npm run setup`):
 
@@ -90,9 +92,10 @@ src/
   app.js               createApp(deps): ghép các lớp, không có logic
   presentation/        LỚP TRÌNH BÀY
     controllers/       PageController + API controller + ErrorMapper
-    views/             trang EJS M1–M3
+    views/             trang EJS M1–M3, partials/ khung navbar · sidebar · footer
+    styles/            tailwind.css: nguồn CSS, npm run build:css dựng ra public/css/app.css
     validators/        kiểm định dạng đầu vào (400)
-  public/js/           api-client.js gọi API JSON
+  public/js/           api-client.js gọi API JSON; script từng trang (ticket-create.js = M1)
   services/            LỚP NGHIỆP VỤ: mọi quy tắc QT-xx
   domain/              thực thể (Ticket, Device…)
   repositories/        LỚP TRUY CẬP DỮ LIỆU
@@ -168,6 +171,6 @@ Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui 
 - [x] API danh mục sản phẩm và nhóm sự cố: đọc, thêm, sửa, ngừng dùng – chỉ Quản lý được ghi (HT2, API 6, 11–17)
 - [x] API khách hàng, thiết bị, tình trạng bảo hành (API 1–5)
 - [x] API lập phiếu: mã phiếu, hạn cam kết, lịch sử đầu tiên, chống lưu trùng (API 7)
-- [ ] Module tiếp nhận và lập phiếu: UC1, UC4, UC5 (MUST)
+- [x] Màn hình M1 tiếp nhận và lập phiếu: UC1, UC4, UC5 (MUST) – giao diện Tailwind, khung navbar · sidebar · footer
 - [ ] Module tạo khách hàng và ghi nhận thiết bị: UC2, UC3 (SHOULD)
 - [ ] Module danh sách phiếu của trung tâm: UC6 (SHOULD)
