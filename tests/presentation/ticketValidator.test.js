@@ -1,6 +1,6 @@
 'use strict';
 
-const { validateTicketCreate, MESSAGES } = require('../../src/presentation/validators/ticketValidator');
+const { validateTicketCreate, validateTicketList, MESSAGES } = require('../../src/presentation/validators/ticketValidator');
 const { ErrorCode } = require('../../src/errors/AppError');
 
 // Unit test validator lập phiếu (api-contract mục 5, D7, D8): chỉ kiểm định dạng, gom đủ lỗi một lần.
@@ -101,5 +101,57 @@ describe('ticketValidator – lập phiếu (API 7)', () => {
         for (const body of [{}, null, [], 'abc']) {
             expect(Object.keys(fieldsOf(body, undefined)).sort()).toEqual(['customer_id', 'device_id', 'idempotency_key', 'issue_desc']);
         }
+    });
+});
+
+/** Lỗi theo trường của query danh sách phiếu; hợp lệ → {}. */
+function listFieldsOf(query) {
+    try {
+        validateTicketList(query);
+    } catch (err) {
+        expect(err.code).toBe(ErrorCode.VALIDATION_FAILED);
+        return err.details;
+    }
+    return {};
+}
+
+describe('ticketValidator – danh sách phiếu (API 8)', () => {
+    test('FR10 luồng đúng: không gửi page, size → mặc định trang 1, 20 dòng', () => {
+        expect(validateTicketList({})).toEqual({ page: 1, size: 20 });
+        expect(validateTicketList(undefined)).toEqual({ page: 1, size: 20 });
+    });
+
+    test('FR10 luồng đúng: page, size dạng chuỗi số → đổi thành số', () => {
+        expect(validateTicketList({ page: '3', size: '50' })).toEqual({ page: 3, size: 50 });
+    });
+
+    test('FR10 giá trị biên: size = 1 và size = 100 được; size = 101 bị từ chối', () => {
+        expect(validateTicketList({ size: '1' }).size).toBe(1);
+        expect(validateTicketList({ size: '100' }).size).toBe(100);
+        expect(listFieldsOf({ size: '101' })).toEqual({ size: MESSAGES.size });
+    });
+
+    test('FR10 giá trị biên: page = 1 được; page = 0 bị từ chối', () => {
+        expect(validateTicketList({ page: '1' }).page).toBe(1);
+        expect(listFieldsOf({ page: '0' })).toEqual({ page: MESSAGES.page });
+    });
+
+    test('FR10 giá trị biên: size = 0 bị từ chối', () => {
+        expect(listFieldsOf({ size: '0' })).toEqual({ size: MESSAGES.size });
+    });
+
+    test('FR10 dữ liệu sai: số âm, số lẻ, chữ, chuỗi rỗng, gửi hai lần → lỗi đúng trường', () => {
+        for (const bad of ['-1', '1.5', 'abc', '', ' 2', '1e2', ['1', '2']]) {
+            expect(listFieldsOf({ page: bad })).toEqual({ page: MESSAGES.page });
+            expect(listFieldsOf({ size: bad })).toEqual({ size: MESSAGES.size });
+        }
+    });
+
+    test('FR10 dữ liệu sai: page vượt số nguyên an toàn bị từ chối', () => {
+        expect(listFieldsOf({ page: '9007199254740992' })).toEqual({ page: MESSAGES.page });
+    });
+
+    test('FR10 dữ liệu sai: page và size cùng sai → gom cả hai lỗi trong một lần', () => {
+        expect(Object.keys(listFieldsOf({ page: '0', size: '101' })).sort()).toEqual(['page', 'size']);
     });
 });
