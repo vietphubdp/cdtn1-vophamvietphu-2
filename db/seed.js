@@ -12,7 +12,9 @@ const { Client } = require('pg');
 const { loadDbConfig } = require('../src/config');
 
 const SEEDS_DIR = path.join(__dirname, 'seeds');
-const COUNTED_TABLES = ['service_center', 'employee', 'product', 'issue_category', 'customer', 'device'];
+const COUNTED_TABLES = [
+    'service_center', 'employee', 'product', 'issue_category', 'customer', 'device', 'ticket', 'ticket_status_log',
+];
 
 function listSeedFiles() {
     return fs
