@@ -5,6 +5,11 @@ const { Role } = require('../../src/domain/constants');
 const { createFakeProductRepository, createFakeIssueCategoryRepository } = require('./fakeCatalog');
 const { createFakeCustomerRepository } = require('./fakeCustomer');
 const { createFakeDeviceRepository } = require('./fakeDevice');
+const {
+    createFakeTicketRepository,
+    createFakeTicketStatusLogRepository,
+    createFakeTransactionRunner,
+} = require('./fakeTicket');
 
 // Dữ liệu giả cho test đăng nhập, không cần CSDL (D4).
 const TEST_PASSWORD = 'Demo@2026';
@@ -57,7 +62,10 @@ function createTestDeps(overrides = {}) {
             issueCategory: createFakeIssueCategoryRepository(),
             customer: createFakeCustomerRepository(),
             device: createFakeDeviceRepository(),
+            ticket: createFakeTicketRepository(),
+            ticketStatusLog: createFakeTicketStatusLogRepository(),
         },
+        withTransaction: createFakeTransactionRunner().withTransaction,
         jwt: TEST_JWT,
         logger: createSilentLogger(),
         ...overrides,
