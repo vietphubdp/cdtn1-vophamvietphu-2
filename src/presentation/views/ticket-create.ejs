@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <%- include('partials/head') %>
+    <title>Lập phiếu bảo hành · Smart CRM Mekong Mobile</title>
+    <script src="/public/js/format.js" defer></script>
+    <script src="/public/js/ticket-create.js" defer></script>
+</head>
+<body class="min-h-dvh bg-neutral-50 font-sans text-neutral-900 antialiased">
+<%# M1 · Lập phiếu bảo hành — UC5 (gồm UC1, UC4) · US1, US4, US5, US6. Theo docs/wireframe.png.
+    Số (n) là thứ tự trường của wireframe; mã 3a, 3b, 4a, 5a, 5b, 7a, 9a, 9b, 9c là ngoại lệ UC5 (srs.md B.3).
+    Trang chỉ có khung; dữ liệu lấy và gửi qua API 1, 2, 5, 6, 7 bằng public/js/ticket-create.js. %>
+<%- include('partials/navbar') %>
+<div class="lg:flex">
+    <%- include('partials/sidebar') %>
+    <div class="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-1 flex-col">
+        <main class="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight">Lập phiếu bảo hành</h1>
+                <p class="card-desc mt-1">(1) Trung tâm: <span class="font-medium text-neutral-900"><%= caller.center_name %></span> (hệ thống tự điền theo tài khoản)</p>
+            </div>
+
+            <%# ---------- Khách hàng (UC1, API 1) ---------- %>
+            <section class="card" aria-labelledby="customer-title">
+                <h2 class="card-title" id="customer-title">Khách hàng</h2>
+                <form id="lookup-form" class="mt-4" novalidate>
+                    <label class="label" for="phone">(2) Số điện thoại khách *</label>
+                    <div class="flex flex-col gap-3 sm:flex-row">
+                        <input class="input sm:max-w-xs" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="off"
+                               placeholder="0901 234 567" aria-describedby="phone-error">
+                        <button type="submit" class="btn-primary" id="lookup-button">
+                            <%- include('partials/icon', { name: 'search', className: 'size-4' }) %>
+                            <span>Tra cứu</span>
+                        </button>
+                    </div>
+                    <%# 3b: số không hợp lệ (400 fields.phone) %>
+                    <p class="field-error" id="phone-error" data-error-for="phone"></p>
+                </form>
+
+                <div class="mt-4 space-y-3" aria-live="polite" id="customer-region">
+                    <p class="skeleton px-4 py-3 text-sm text-neutral-500" id="customer-loading" hidden>Đang tra cứu khách hàng…</p>
+                    <%# 3a: chưa có khách (404) → mở M2 với số đã gõ %>
+                    <p class="alert-warning" id="customer-not-found" hidden>
+                        ⓘ Không tìm thấy khách hàng.
+                        <a class="link" id="customer-create-link" href="/customers/new">Tạo khách hàng mới →</a>
+                    </p>
+                    <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="customer-error" hidden>
+                        <span data-message></span>
+                        <button type="button" class="btn-outline" id="customer-retry">Thử lại</button>
+                    </div>
+                    <dl class="tile grid gap-x-6 gap-y-2 text-sm md:grid-cols-2" id="customer-info" hidden>
+                        <div><dt class="inline text-neutral-500">(3) Họ tên:</dt> <dd class="inline font-medium" data-field="full_name"></dd></div>
+                        <%# (4) QT-15: Tiếp nhận nhận số đã che từ API, Quản lý thấy đầy đủ (NFR2) %>
+                        <div><dt class="inline text-neutral-500">(4) Số điện thoại:</dt> <dd class="inline font-medium" data-field="phone"></dd></div>
+                        <div class="md:col-span-2"><dt class="inline text-neutral-500">(5) Địa chỉ:</dt> <dd class="inline font-medium" data-field="address"></dd></div>
+                    </dl>
+                    <p class="field-error" data-error-for="customer_id"></p>
+                </div>
+            </section>
+
+            <%# ---------- Thiết bị của khách (UC1, API 2) ---------- %>
+            <section class="card" aria-labelledby="device-title" id="device-section" hidden>
+                <h2 class="card-title" id="device-title">Thiết bị của khách</h2>
+                <div class="mt-4 space-y-3" aria-live="polite">
+                    <div class="space-y-2" id="device-loading" hidden>
+                        <p class="text-sm text-neutral-500">Đang tải thiết bị…</p>
+                        <div class="skeleton h-10"></div>
+                        <div class="skeleton h-10"></div>
+                    </div>
+                    <p class="tile text-center text-sm text-neutral-500" id="device-empty" hidden>Khách chưa có thiết bị nào – hãy ghi nhận thiết bị mới</p>
+                    <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="device-error" hidden>
+                        <span>Không tải được danh sách thiết bị</span>
+                        <button type="button" class="btn-outline" id="device-retry">Thử lại</button>
+                    </div>
+                    <fieldset id="device-list" hidden>
+                        <legend class="sr-only">Chọn thiết bị cần bảo hành</legend>
+                        <div class="overflow-x-auto">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th scope="col"><span class="sr-only">Chọn</span></th>
+                                    <th scope="col">(6) Tên máy</th>
+                                    <th scope="col">(7) Serial/IMEI</th>
+                                    <th scope="col">(8) Ngày mua</th>
+                                </tr>
+                                </thead>
+                                <tbody id="device-rows"></tbody>
+                            </table>
+                        </div>
+                    </fieldset>
+                    <p class="field-error" data-error-for="device_id"></p>
+                    <%# 4a: thiết bị chưa có trong danh sách → M2 %>
+                    <a class="link inline-flex items-center gap-1 text-sm" id="device-create-link" href="/customers/new">
+                        <%- include('partials/icon', { name: 'plus', className: 'size-4' }) %> Ghi nhận thiết bị mới
+                    </a>
+                </div>
+            </section>
+
+            <%# ---------- (9) Tình trạng bảo hành (UC4, API 5, QT-05) ---------- %>
+            <section class="card" aria-labelledby="warranty-title">
+                <h2 class="card-title" id="warranty-title">(9) Tình trạng bảo hành</h2>
+                <div class="mt-4 space-y-3" aria-live="polite">
+                    <p class="card-desc" id="warranty-idle">Hệ thống tự xác định khi chọn thiết bị (QT-05)</p>
+                    <p class="skeleton px-4 py-3 text-sm text-neutral-500" id="warranty-loading" hidden>Đang xác định tình trạng bảo hành…</p>
+                    <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="warranty-error" hidden>
+                        <span>Không xác định được tình trạng bảo hành</span>
+                        <button type="button" class="btn-outline" id="warranty-retry">Thử lại</button>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3" id="warranty-result" hidden>
+                        <span class="badge px-4 py-1.5 text-sm" id="warranty-badge"></span>
+                        <span class="text-sm text-neutral-500" id="warranty-expires"></span>
+                    </div>
+                    <%# 5a, 5b: vẫn lập phiếu được %>
+                    <p class="alert-warning" id="warranty-unverified" hidden>ⓘ Chưa xác minh bảo hành – thiếu ngày mua; vẫn lập phiếu, phiếu chờ Quản lý trung tâm quyết định</p>
+                    <p class="alert-error" id="warranty-expired" hidden>⚠ Hết bảo hành – vẫn lập phiếu, phiếu được ghi là có tính phí</p>
+                </div>
+            </section>
+
+            <%# ---------- Nội dung yêu cầu (UC5, API 6, API 7) ---------- %>
+            <form class="card space-y-5" id="ticket-form" aria-labelledby="request-title" novalidate>
+                <h2 class="card-title" id="request-title">Nội dung yêu cầu</h2>
+
+                <div>
+                    <label class="label" for="issue_desc">(10) Mô tả lỗi * <span class="font-normal text-neutral-500">(10–2000 ký tự)</span></label>
+                    <textarea class="textarea min-h-28" id="issue_desc" name="issue_desc" rows="4" maxlength="2000"
+                              placeholder="Máy không nhận sạc, cắm sạc báo lỗi phụ kiện" aria-describedby="issue_desc-error"></textarea>
+                    <%# 9a %>
+                    <p class="field-error" id="issue_desc-error" data-error-for="issue_desc"></p>
+                </div>
+
+                <div class="grid gap-5 md:grid-cols-2">
+                    <div>
+                        <label class="label" for="category_id">(11) Nhóm sự cố</label>
+                        <select class="select" id="category_id" name="category_id" aria-describedby="category_id-hint category_id-error" disabled>
+                            <option value="">Đang tải…</option>
+                        </select>
+                        <p class="hint" id="category_id-hint">Để trống = Chưa phân loại (7a) · chỉ liệt kê nhóm đang sử dụng (FR7)</p>
+                        <p class="field-error" id="category_id-error" data-error-for="category_id"></p>
+                        <div class="alert-error mt-2 flex flex-wrap items-center justify-between gap-3" id="category-error" hidden>
+                            <span>Không tải được danh mục nhóm sự cố</span>
+                            <button type="button" class="btn-outline" id="category-retry">Thử lại</button>
+                        </div>
+                    </div>
+
+                    <fieldset aria-describedby="priority-hint priority-error">
+                        <legend class="label">(12) Mức ưu tiên</legend>
+                        <div class="flex flex-wrap gap-2">
+                            <% [['CAO', 'Cao'], ['TRUNG_BINH', 'Trung bình'], ['THAP', 'Thấp']].forEach(([value, text]) => { %>
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm has-checked:border-neutral-900 has-checked:bg-neutral-900 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-neutral-900 has-focus-visible:ring-offset-2">
+                                <input type="radio" name="priority" value="<%= value %>" class="accent-neutral-900" <%= value === 'TRUNG_BINH' ? 'checked' : '' %>>
+                                <%= text %>
+                            </label>
+                            <% }) %>
+                        </div>
+                        <p class="hint" id="priority-hint">Điền sẵn theo nhóm sự cố, đổi được (FR8)</p>
+                        <p class="field-error" id="priority-error" data-error-for="priority"></p>
+                    </fieldset>
+                </div>
+
+                <p class="card-desc">Hạn cam kết: hệ thống tự sinh khi lưu theo mức ưu tiên (QT-04)</p>
+
+                <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <%# "Thoát không lưu" chỉ đóng form, không phải hủy phiếu (W8) %>
+                    <button type="button" class="btn-outline" id="cancel-button">Thoát không lưu</button>
+                    <button type="submit" class="btn-primary" id="save-button">Lưu phiếu</button>
+                </div>
+
+                <div class="space-y-3" aria-live="polite" id="save-region">
+                    <p class="alert-success" id="save-success" tabindex="-1" hidden></p>
+                    <%# 9b (422), 404, 403, 400 chung %>
+                    <p class="alert-error" id="save-error" hidden></p>
+                    <%# 9c mất kết nối, 500: giữ dữ liệu và khóa chống trùng, cho thử lưu lại %>
+                    <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="save-retry-box" hidden>
+                        <span data-message></span>
+                        <button type="button" class="btn-outline" id="save-retry">Thử lưu lại</button>
+                    </div>
+                </div>
+            </form>
+        </main>
+        <%- include('partials/footer') %>
+    </div>
+</div>
+</body>
+</html>

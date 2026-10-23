@@ -89,6 +89,9 @@ function createApp(deps) {
     // Trang EJS
     app.get('/login', pageController.login);
     app.get('/', requirePageLogin, pageController.home);
+    app.get('/tickets/new', requirePageLogin, pageController.ticketCreate); // M1
+    app.get('/customers/new', requirePageLogin, pageController.customerCreate); // M2
+    app.get('/tickets', requirePageLogin, pageController.ticketList); // M3
 
     // API 9, 10 không cần JWT (api-contract mục 2).
     app.post('/api/auth/login', authController.login);

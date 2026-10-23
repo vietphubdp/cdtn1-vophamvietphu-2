@@ -17,6 +17,14 @@ const PRIORITY_WITHOUT_CATEGORY = Priority.TRUNG_BINH;
 // Mã phiếu 'BH' + 6 chữ số + '/' + năm (CHECK ticket_code trong db/schema.sql).
 const TICKET_NUMBER_DIGITS = 6;
 
+/**
+ * Người gọi có được lập phiếu không (API 7, màn hình M1). Hàm thuần dùng chung cho createTicket
+ * và PageController (ẩn mục M1, chuyển Quản lý về M3) để quy tắc vai trò chỉ nằm một chỗ.
+ */
+function canCreateTicket(caller) {
+    return Boolean(caller) && CREATE_ROLES.includes(caller.role);
+}
+
 const MESSAGES = Object.freeze({
     createForbidden: 'Chỉ nhân viên Tiếp nhận được lập phiếu bảo hành.',
     customerNotFound: 'Không tìm thấy khách hàng',
@@ -210,4 +218,4 @@ function createTicketService({
     };
 }
 
-module.exports = { createTicketService, formatTicketCode, resolvePriority, MESSAGES };
+module.exports = { createTicketService, canCreateTicket, formatTicketCode, resolvePriority, MESSAGES };

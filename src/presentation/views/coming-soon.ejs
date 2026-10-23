@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <%- include('partials/head') %>
+    <title><%= screen %> · Smart CRM Mekong Mobile</title>
+</head>
+<body class="min-h-dvh bg-neutral-50 font-sans text-neutral-900 antialiased">
+<%# Trang chờ tạm cho M2, M3 (GĐ 7): giữ cho điều hướng của khung trang chạy được. GĐ 8 thay bằng màn hình thật. %>
+<%- include('partials/navbar') %>
+<div class="lg:flex">
+    <%- include('partials/sidebar') %>
+    <div class="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-1 flex-col">
+        <main class="mx-auto w-full max-w-4xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+            <h1 class="mb-6 text-2xl font-semibold tracking-tight"><%= screen %> · <%= title %></h1>
+            <div class="card">
+                <p class="card-desc">Màn hình này đang được xây dựng.</p>
+                <% if (backPath) { %>
+                <a href="<%= backPath %>" class="btn-outline mt-4">Quay lại lập phiếu</a>
+                <% } %>
+            </div>
+        </main>
+        <%- include('partials/footer') %>
+    </div>
+</div>
+</body>
+</html>
