@@ -146,9 +146,13 @@ describe('Trang đăng nhập và thanh tiêu đề (D5)', () => {
         deps.repositories.employee.findByUsername.mockClear();
 
         const home = await agent.get('/');
-        expect(home.status).toBe(200);
-        expect(home.text).toContain('Trung tâm bảo hành Quận 10 · Trần Thị Lan (Tiếp nhận)');
-        expect(home.text).toContain('Đăng xuất');
+        expect(home.status).toBe(302);
+        expect(home.headers.location).toBe('/tickets/new'); // Tiếp nhận vào M1
+
+        const page = await agent.get('/tickets/new');
+        expect(page.status).toBe(200);
+        expect(page.text).toContain('Trung tâm bảo hành Quận 10 · Trần Thị Lan (Tiếp nhận)');
+        expect(page.text).toContain('Đăng xuất');
         expect(deps.repositories.employee.findByUsername).not.toHaveBeenCalled(); // không tra CSDL (D5)
 
         const login = await agent.get('/login');

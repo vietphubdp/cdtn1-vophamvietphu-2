@@ -1,6 +1,6 @@
 'use strict';
 
-const { createTicketService, formatTicketCode, resolvePriority } = require('../../src/services/TicketService');
+const { createTicketService, canCreateTicket, formatTicketCode, resolvePriority } = require('../../src/services/TicketService');
 const { ErrorCode } = require('../../src/errors/AppError');
 const { DuplicateKeyError } = require('../../src/errors/DuplicateKeyError');
 const { Role, Priority, TicketStatus, WarrantyStatus } = require('../../src/domain/constants');
@@ -329,6 +329,21 @@ describe('TicketService – chống lưu trùng bằng Idempotency-Key (NFR4, Q1
         const err = await captureError(ticketService.createTicket(RECEPTIONIST, INPUT, OTHER_KEY, NOW));
 
         expect(err).toBe(duplicateCode);
+    });
+});
+
+describe('canCreateTicket – ai được lập phiếu (API 7, M1, D3)', () => {
+    test('UC5 luồng đúng: nhân viên Tiếp nhận được lập phiếu', () => {
+        expect(canCreateTicket(RECEPTIONIST)).toBe(true);
+    });
+
+    test('UC5 dữ liệu sai: Quản lý trung tâm không được lập phiếu (chỉ dùng M3)', () => {
+        expect(canCreateTicket(MANAGER)).toBe(false);
+    });
+
+    test('UC5 dữ liệu sai: không có người gọi hoặc vai trò lạ → không được lập phiếu', () => {
+        expect(canCreateTicket(undefined)).toBe(false);
+        expect(canCreateTicket({ ...RECEPTIONIST, role: 'BAN_GIAM_DOC' })).toBe(false);
     });
 });
 
