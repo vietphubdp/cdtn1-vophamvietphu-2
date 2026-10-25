@@ -49,15 +49,19 @@ function createPageController({ authService, now }) {
             return res.render('ticket-create', layoutLocals(req.caller, 'M1'));
         },
 
-        /** M2 – Tạo khách / ghi nhận thiết bị: làm ở GĐ 8, tạm hiện trang chờ để liên kết 3a, 4a của M1 không lỗi. */
+        /**
+         * M2 – Tạo khách hàng mới / Ghi nhận thiết bị mới (UC2, UC3). Chỉ mở từ M1 nên sidebar vẫn sáng mục M1.
+         * Tham số ?phone=, ?customer_id= do M1 truyền (3a, 4a) được đọc bằng customer-create.js, không đọc ở đây.
+         * M1, M2 chỉ dành cho Tiếp nhận (wireframe) → Quản lý chuyển về M3.
+         */
         customerCreate(req, res) {
             if (!canCreateTicket(req.caller)) return res.redirect(PAGE_PATH.M3);
-            return res.render('coming-soon', { ...layoutLocals(req.caller, 'M1'), title: 'Tạo khách hàng mới / Ghi nhận thiết bị mới', screen: 'M2', backPath: PAGE_PATH.M1 });
+            return res.render('customer-create', layoutLocals(req.caller, 'M1'));
         },
 
-        /** M3 – Danh sách phiếu: làm ở GĐ 8, tạm hiện trang chờ. */
+        /** M3 – Danh sách phiếu của trung tâm (UC6) cho cả hai vai trò; trang và số trang do ticket-list.js đọc từ ?page=. */
         ticketList(req, res) {
-            res.render('coming-soon', { ...layoutLocals(req.caller, 'M3'), title: 'Danh sách phiếu của trung tâm', screen: 'M3', backPath: null });
+            res.render('ticket-list', layoutLocals(req.caller, 'M3'));
         },
     };
 }

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <%- include('partials/head') %>
+    <title>Danh sách phiếu · Smart CRM Mekong Mobile</title>
+    <script src="/public/js/format.js" defer></script>
+    <script src="/public/js/ticket-list.js" defer></script>
+</head>
+<body class="min-h-dvh bg-neutral-50 font-sans text-neutral-900 antialiased">
+<%# M3 · Danh sách phiếu của trung tâm — UC6 · US7. Theo docs/wireframe.png.
+    Trang chỉ có khung; dữ liệu lấy qua API 8 bằng public/js/ticket-list.js.
+    Trung tâm lấy từ JWT ở máy chủ (QT-14), số điện thoại che theo vai trò (QT-15), cờ quá hạn do API tính (FR11). %>
+<%- include('partials/navbar') %>
+<div class="lg:flex">
+    <%- include('partials/sidebar') %>
+    <div class="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-1 flex-col">
+        <main class="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div>
+                <h1 class="text-2xl font-semibold tracking-tight">Danh sách phiếu của trung tâm</h1>
+                <p class="card-desc mt-1">
+                    Trung tâm: <span class="font-medium text-neutral-900"><%= caller.center_name %></span>
+                    (chỉ phiếu của trung tâm mình – QT-14) · Sắp theo Hạn cam kết tăng dần · 20 dòng/trang
+                </p>
+            </div>
+
+            <section class="card" aria-labelledby="list-title">
+                <h2 class="sr-only" id="list-title">Bảng phiếu bảo hành</h2>
+
+                <div class="space-y-3" aria-live="polite">
+                    <div class="space-y-2" id="list-loading" hidden>
+                        <p class="text-sm text-neutral-500">Đang tải danh sách phiếu…</p>
+                        <div class="skeleton h-10"></div>
+                        <div class="skeleton h-10"></div>
+                        <div class="skeleton h-10"></div>
+                    </div>
+                    <p class="tile text-center text-sm text-neutral-500" id="list-empty" hidden>Trung tâm chưa có phiếu nào</p>
+                    <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="list-error" hidden>
+                        <span>Không tải được danh sách phiếu</span>
+                        <button type="button" class="btn-outline" id="list-retry">Thử lại</button>
+                    </div>
+                </div>
+
+                <div id="list-content" hidden>
+                    <%# UI6: bảng 12 cột cuộn ngang trên màn hình hẹp, trang không cuộn ngang %>
+                    <div class="-mx-5 overflow-x-auto sm:-mx-6" tabindex="0" aria-label="Bảng phiếu bảo hành, cuộn ngang để xem đủ cột">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th scope="col" class="pl-5 sm:pl-6">(1) Mã phiếu</th>
+                                <th scope="col">(2) Khách hàng</th>
+                                <th scope="col">(3) Số điện thoại</th>
+                                <th scope="col">(4) Tên máy</th>
+                                <th scope="col">(5) Serial/IMEI</th>
+                                <th scope="col">(6) Nhóm sự cố</th>
+                                <th scope="col">(7) Mức ưu tiên</th>
+                                <th scope="col">(8) Tình trạng bảo hành</th>
+                                <th scope="col">(9) Trạng thái</th>
+                                <th scope="col">(10) Tiếp nhận lúc</th>
+                                <th scope="col">(11) Hạn cam kết</th>
+                                <th scope="col" class="pr-5 sm:pr-6">(12) Quá hạn</th>
+                            </tr>
+                            </thead>
+                            <tbody id="ticket-rows"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                        <nav class="flex flex-wrap items-center gap-2" aria-label="Phân trang">
+                            <button type="button" class="btn-outline px-4 py-2" id="page-prev">« Trước</button>
+                            <span class="px-2" id="page-info" aria-live="polite"></span>
+                            <button type="button" class="btn-outline px-4 py-2" id="page-next">Sau »</button>
+                            <span class="text-neutral-500" id="page-total"></span>
+                        </nav>
+                        <%# FR11: không báo chỉ bằng màu (UI8) – dòng quá hạn còn có nhãn "QUÁ HẠN" ở cột (12) %>
+                        <p class="text-red-700">Dòng tô đỏ = phiếu quá hạn (hạn cam kết đã qua, chưa Hoàn tất / Đã đóng – FR11)</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <%- include('partials/footer') %>
+    </div>
+</div>
+</body>
+</html>
