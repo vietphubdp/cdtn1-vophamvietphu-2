@@ -250,8 +250,8 @@ Lọc theo trung tâm trong JWT (QT-14), sắp theo `due_date` tăng dần rồi
     "employee_id": 7,
     "full_name": "Trần Thị Lan",
     "role": "TIEP_NHAN",
-    "center_id": 2,
-    "center_name": "Trung tâm bảo hành Quận 10"
+    "center_id": 1,
+    "center_name": "TTBH Quận 10"
 }
 ```
 
