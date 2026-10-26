@@ -1,0 +1,32 @@
+customer_id,full_name,phone,email,address,source
+100001,Nguyễn Văn An,0901234567,,"12 Nguyễn Tri Phương, Quận 10",TU_BO_SUNG
+469,Lê Thanh Dung,0786560724,,"145 Trần Hưng Đạo, Phong Điền",customers_raw.csv
+561,Lý Văn Như,0793573965,,"211 Trần Hưng Đạo, Thốt Nốt",customers_raw.csv
+728,Trần Tuấn Mỹ,0336424821,my97@outlook.com,"222 Lê Lợi, Thốt Nốt",customers_raw.csv
+1191,Lý Hữu Nga,0831499404,nga760@outlook.com,"184 Nguyễn Trãi, Quận 7",customers_raw.csv
+2696,Vũ Kim Hải,0973002681,hai352@outlook.com,"191 Nguyễn Trãi, Hai Bà Trưng",customers_raw.csv
+3507,Bùi Hoài Tú,0770300809,,"92 3 Tháng 2, Quận Bình Thạnh",customers_raw.csv
+4822,Võ Văn Nga,0888738297,,"179 Nguyễn Trãi, Quận 3",customers_raw.csv
+6992,Le Bao Phuc,0912625299,phuc460@gmail.com,"134 Điện Biên Phủ, Hoàn Kiếm",customers_raw.csv
+7425,Phan Quang Giang,0940597189,giang891@gmail.com,"148 Nguyễn Trãi, Quận 10",customers_raw.csv
+10553,Võ Hoài Như,0823936201,nhu997@yahoo.com,"218 Lê Lợi, TP. Thủ Đức",customers_raw.csv
+10645,Vũ Bảo Bình,0833429902,,"171 Nguyễn Trãi, Quận 11",customers_raw.csv
+12915,Trần Thị Quân,0848217372,quan684@gmail.com,"6 Nguyễn Trãi, Quận Bình Tân",customers_raw.csv
+13160,Dương Xuân Hiếu,0371969455,,"128 Điện Biên Phủ, Quận Tân Phú",customers_raw.csv
+14121,Bùi Tuấn Huy,0843145885,huy765@yahoo.com,,customers_raw.csv
+17270,Lý Hữu Ngân,0823489687,,"136 Nguyễn Trãi, Quận 10",customers_raw.csv
+20763,Nguyễn Đức Mỹ,0324069020,,"206 Cách Mạng Tháng 8, Quận 7",customers_raw.csv
+26717,Bùi Thị Quân,0828016953,quan213@gmail.com,"229 Hai Bà Trưng, Ô Môn",customers_raw.csv
+29276,Đỗ Thanh Vinh,0968436188,,"165 Nguyễn Trãi, Quận 5",customers_raw.csv
+31561,Lê Minh Mỹ,0885988915,my494@outlook.com,"138 Điện Biên Phủ, Quận Tân Phú",customers_raw.csv
+33991,Bùi Ngọc Như,0365099842,,"175 Hai Bà Trưng, Cái Răng",customers_raw.csv
+34997,Vo Thi Huy,0376160746,huy532@yahoo.com,"267 Trần Hưng Đạo, Bình Thủy",customers_raw.csv
+35879,Lê Hoài Hà,0941328371,ha398@gmail.com,"206 Nguyễn Trãi, Quận 3",customers_raw.csv
+36022,Bùi Văn Trang,0340439264,,"62 Trần Hưng Đạo, Quận Tân Phú",customers_raw.csv
+37762,Võ Thị Hạnh,0395758613,hanh500@gmail.com,"224 Trần Hưng Đạo, Hoàn Kiếm",customers_raw.csv
+43601,Nguyễn Thị Quân,0374865516,quan243@outlook.com,"205 Cách Mạng Tháng 8, Quận 7",customers_raw.csv
+43717,Huynh Hoai Oanh,0965276507,oanh115@gmail.com,"1 Trần Hưng Đạo, Quận 7",customers_raw.csv
+44049,Hoàng Tuấn Ngân,0762687631,,"17 Trần Hưng Đạo, Cầu Giấy",customers_raw.csv
+44402,Phạm Anh Trang,0322526753,trang24@gmail.com,"261 Điện Biên Phủ, Ô Môn",customers_raw.csv
+47108,Lê Ngọc Thảo,0708700537,,"276 Hai Bà Trưng, Quận 5",customers_raw.csv
+53288,Hoàng Tuấn Khoa,0352534455,,"42 Lê Lợi, Quận Bình Tân",customers_raw.csv

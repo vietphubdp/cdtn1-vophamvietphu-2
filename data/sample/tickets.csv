@@ -1,0 +1,31 @@
+source_ticket_id,customer_id,product_id,serial_no,center_id,issue_desc,category_id,priority,is_warranty,hours_ago
+3240,561,34,SN973444858560,1,CẮM SẠC MÁY NÓNG BẤT THƯỜNG,3,TRUNG_BINH,true,155
+2616,728,246,SN199004108171,1,may bi màn hình bị ám vàng một góc bị từ tuần trước,1,CAO,true,12
+2322,20763,1,SN251825437696,1,khach bao ung dung tu thoat lien tuc xay ra sau khi roi,4,THAP,false,197
+6602,3507,34,SN961110558143,1,kh nói máy tự tắt khi còn 30% pin máy còn bảo hành,2,TRUNG_BINH,true,62
+2629,26717,140,SN840021992597,1,MÁY TỰ KHỞI ĐỘNG LẠI NHIỀU LẦN TRONG NGÀY,4,THAP,true,180
+1105,14121,113,SN165966868957,1,may bi màn hình bị sọc dọc xảy ra sau khi rơi,1,CAO,true,4
+2669,43717,199,SN584056001027,1,may bi cắm sạc không vào điện khách chưa từng sửa ở đâu,3,TRUNG_BINH,true,140
+2100,31561,312,SN929125548082,1,khách báo máy phồng pin cấn màn hình bị từ tuần trước,2,TRUNG_BINH,false,68
+1753,1191,34,SN623191515907,1,điểm chết trên màn hình xảy ra sau khi rơi,1,CAO,false,77
+2974,10645,112,SN537264294383,1,khách báo màn hình bị ám vàng một góc khách chưa từng sửa ở đâu,1,CAO,false,6
+2458,53288,21,SN166027679108,2,kh nói màn hình xuất hiện vệt mực loang khách chưa từng sửa ở đâu,1,CAO,true,129
+6073,4822,130,SN706445075616,2,may bi cảm ứng chỗ được chỗ không đã thử khởi động lại không được,1,CAO,false,8
+7470,36022,49,SN463758768965,2,pin nóng bất thường khi dùng bị từ tuần trước,2,TRUNG_BINH,true,218
+2672,7425,138,SN358039013530,2,kh nói máy tự tắt khi còn 30% pin,2,THAP,false,32
+4486,2696,129,SN859840104979,2,khách báo cảm ứng loạn không bấm được đã thử khởi động lại không được,1,THAP,true,193
+4856,35879,4,SN160121465275,2,điện thoại dính nước mưa loa bị rè máy còn bảo hành,5,CAO,true,20
+20,37762,21,SN319355331102,2,KHACH BAO MAY TU KHOI DONG LAI NHIEU LAN TRONG NGAY,4,CAO,true,82
+1622,44049,305,SN352219914837,2,kh nói máy chạy chậm giật lag sau khi cập nhật,4,THAP,false,100
+828,33991,293,SN542016106661,2,kh nói chân sạc lỏng phải giữ mới sạc được mới bị 2 ngày nay,3,TRUNG_BINH,true,157
+820,34997,181,SN902099526414,2,khach bao pin tut rat nhanh dung 2 tieng da het may con bao hanh,2,CAO,true,5
+1100,10553,120,SN307291245063,3,khách báo pin chai chỉ còn dùng được nửa ngày mới bị 2 ngày nay,2,TRUNG_BINH,false,220
+4260,12915,192,SN405217069283,3,cổng sạc bị gãy chân máy còn bảo hành,3,CAO,true,11
+5841,469,224,SN980903891033,3,tình trạng: máy rung liên tục không dừng máy còn bảo hành,6,TRUNG_BINH,true,187
+3657,6992,259,SN778412682314,3,tình trạng: pin nóng bất thường khi dùng đã thử khởi động lại không được,2,TRUNG_BINH,true,14
+3379,43601,179,SN157184946559,3,cắm sạc báo lỗi phụ kiện khách chưa từng sửa ở đâu,3,TRUNG_BINH,false,216
+123,47108,180,SN780338357703,3,tình trạng: máy có tiếng kêu lạ bên trong,6,TRUNG_BINH,true,33
+2153,13160,223,SN237568964891,3,khách hàng phản ánh điện thoại dính nước mưa loa bị rè xảy ra sau khi rơi,5,CAO,true,137
+4734,29276,256,SN846869140161,3,MAY BI MÀN HÌNH BỊ HỞ SÁNG VIỀN DƯỚI ĐÃ THỬ KHỞI ĐỘNG LẠI KHÔNG ĐƯỢC,1,TRUNG_BINH,true,10
+7751,17270,89,SN280138823728,3,may tu tat khi con 30% pin,2,THAP,true,227
+2300,44402,75,SN644540192564,3,khách hàng phản ánh màn hình bị hở sáng viền dưới máy còn bảo hành,1,TRUNG_BINH,false,16
