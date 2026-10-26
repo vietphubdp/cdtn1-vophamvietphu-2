@@ -1,0 +1,8 @@
+# Không đưa vào ảnh: thư viện cài trên máy (khác hệ điều hành), cấu hình bí mật, kết quả sinh tự động
+node_modules/
+.env
+.git/
+coverage/
+*.log
+src/public/css/app.css
+data/raw/
