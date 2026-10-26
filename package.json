@@ -1,6 +1,6 @@
 {
   "name": "cdtn1-vophamvietphu-2",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Smart CRM – Mekong Mobile · Luồng L2: tiếp nhận và phân loại yêu cầu bảo hành",
   "main": "src/server.js",
