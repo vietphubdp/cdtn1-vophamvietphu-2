@@ -23,6 +23,8 @@ Chi tiết và các mục không làm ở `docs/srs.md`.
 
 ## 3. Hướng dẫn chạy
 
+### Cách A – chạy trực tiếp (Node.js + PostgreSQL trên máy)
+
 Bốn bước, mỗi bước một lệnh:
 
 ```bash
@@ -43,24 +45,53 @@ Các lệnh lẻ (đã gộp trong `npm run setup`):
 | `npm start` | Chạy máy chủ không tự khởi động lại khi sửa code. |
 | `npm test` | Chạy toàn bộ test, không cần CSDL (mục 6). |
 
+### Cách B – chạy bằng Docker (chỉ cần Docker Desktop / Docker Engine có Compose)
+
+Không cần cài Node.js, PostgreSQL hay tạo `.env`:
+
+```bash
+docker compose up --build   # dựng ảnh, chờ CSDL sẵn sàng, migrate + seed, mở http://localhost:3000
+docker compose down         # dừng; thêm -v để xóa luôn dữ liệu CSDL
+```
+
+- `docker-compose.yml` có hai dịch vụ: `db` (PostgreSQL 16, dữ liệu giữ trong volume `db-data`) và `app` (dựng từ `Dockerfile`: `npm ci` theo `package-lock.json`, dựng CSS Tailwind trong ảnh).
+- Mỗi lần `app` khởi động đều chạy `npm run setup` rồi mới chạy máy chủ; chạy lại không lỗi, không nhân đôi dữ liệu (lần hai in "thêm mới 0 dòng").
+- Cổng 5432 của `db` không mở ra máy nên không đụng PostgreSQL đã cài sẵn. Cổng 3000 đã bận thì đổi cổng máy: `APP_PORT=3001 docker compose up --build` (PowerShell: `$env:APP_PORT=3001; docker compose up --build`).
+- Tài khoản demo và dữ liệu mẫu giống cách A. `npm test` vẫn chạy trên máy (mục 6), không cần Docker.
+
 ### Dữ liệu mẫu
 
-Dữ liệu giả lập, không phải dữ liệu thật (họ tên, số điện thoại, serial đều tự soạn).
+Dữ liệu seed lấy từ **bộ dữ liệu mẫu Mekong Mobile** của học phần (doanh nghiệp mô phỏng, sinh bằng `gen_dataset.py`, seed `20260901`). Bộ đầy đủ tải từ VLU e-learning, giải nén vào `data/raw/` (đã gitignore, không commit theo quy định của bộ dữ liệu). Mẫu nhỏ rút ra nằm ở `data/sample/*.csv` (có commit); `npm run db:seed` chỉ đọc `data/sample/`, **không cần** `data/raw/`.
 
-| Bảng | Số dòng | Ghi chú |
+| Bảng | Số dòng | Nguồn và quy tắc rút mẫu |
 | --- | --- | --- |
-| `customer` | 25 | Có khách `0901234567` trùng ví dụ trong `docs/api-contract.md` |
-| `device` | 30 | 14 còn bảo hành · 9 hết bảo hành · 7 không có ngày mua (chưa xác minh) |
-| `product` | 24 | Khớp ví dụ `total: 24` của hợp đồng API |
-| `issue_category` | 6 | Đúng 6 nhóm trong bảng thuật ngữ SRS: Màn hình, Pin, Sạc, Phần mềm, Nước vào, Khác |
-| `service_center` | 6 | Đúng 6 trung tâm của case study Mekong Mobile |
-| `employee` | 6 | 1 Tiếp nhận + 1 Quản lý ở mỗi trung tâm 1–3 |
-| `ticket` | 25 | Trung tâm 1: 8 · 2: 10 · 3: 7; mỗi trung tâm đủ 3 tình trạng bảo hành; 13 phiếu quá hạn, 12 chưa quá hạn tại lúc seed; hạn cam kết và tình trạng bảo hành tính bằng chính code nghiệp vụ |
-| `ticket_status_log` | 25 | Mỗi phiếu 1 dòng lịch sử đầu tiên (trạng thái MỚI, QT-06) |
+| `service_center` | 6 | Nguyên `service_centers.csv` (giữ `center_id`, `center_name`): 1 TTBH Quận 10 · 2 TTBH Quận Tân Bình · 3 TTBH TP. Thủ Đức · 4 TTBH Ninh Kiều · 5 TTBH Cái Răng · 6 TTBH Cầu Giấy |
+| `issue_category` | 6 | Nguyên `issue_categories.csv`, giữ `category_id` và `default_priority`; mã đổi sang tên của bảng thuật ngữ SRS: `MAN_HINH` → Màn hình, `PIN` → Pin, `SAC` → Sạc (mã 3), `PHAN_MEM` → Phần mềm, `NUOC_VAO` → Nước vào, `KHAC` → Khác |
+| `ticket` | 30 | Rút từ `tickets_history.csv`: 10 phiếu mỗi trung tâm 1–3, chọn theo thứ tự xáo trộn có seed; bỏ phiếu của khách không có số điện thoại, phiếu làm trùng số (QT-01) hoặc trùng tên sản phẩm. Giữ khách, sản phẩm, serial, trung tâm, mô tả lỗi, nhóm, mức ưu tiên; **đặt lại** trạng thái MỚI, thời điểm tiếp nhận tính lùi từ lúc seed, hạn cam kết và tình trạng bảo hành tính lại bằng code (QT-04, QT-05). 15 phiếu quá hạn, 15 chưa quá hạn tại lúc seed |
+| `ticket_status_log` | 30 | Mỗi phiếu 1 dòng lịch sử đầu tiên (MỚI, QT-06), do Tiếp nhận của trung tâm ghi |
+| `customer` | 31 | 30 khách mà phiếu tham chiếu (`customer_id` = `record_id` của `customers_raw.csv`), số chuẩn hóa bằng `normalizePhone` (QT-02), tên chuẩn hóa khoảng trắng (giữ nguyên chữ hoa/thường, dấu như bộ mẫu). **Tự bổ sung:** khách `100001` · `0901234567` của ví dụ hợp đồng API và lệnh curl |
+| `product` | 27 | Các sản phẩm mà phiếu tham chiếu (giữ `product_id`, `product_name`, `warranty_months` → số tháng mặc định); đã ≥ 24 nên không phải bổ sung |
+| `device` | 38 | Bộ mẫu không có bảng thiết bị: 30 thiết bị dựng từ (`customer_id`, `product_id`, `serial_no`) của phiếu, **ngày mua tự sinh** cho khớp `is_warranty` của phiếu gốc (20 còn · 10 hết bảo hành). **Tự bổ sung:** `device_id` 1 (còn bảo hành, mua 05/03/2026) và 2 (không có ngày mua) của khách `100001`, thêm 6 thiết bị không có ngày mua → 7 thiết bị chưa xác minh |
+| `employee` | 6 | Tự soạn (bộ mẫu không có nhân viên tiếp nhận): 1 Tiếp nhận + 1 Quản lý ở mỗi trung tâm 1–3 |
 
-Ba bảng danh mục/tổ chức ít hơn 20 dòng **có chủ ý**: số nhóm sự cố và số trung tâm là dữ kiện của nghiệp vụ, seed thêm cho đủ 20 sẽ sai case study; `employee` chỉ là tài khoản mẫu (W13). Các bảng chính (`customer`, `device`, `product`, `ticket`) đủ 20–30 dòng.
+Ba bảng danh mục/tổ chức ít hơn 20 dòng **có chủ ý**: số nhóm sự cố và số trung tâm là dữ kiện của bộ mẫu; `employee` chỉ là tài khoản mẫu (W13).
 
-Thời điểm tiếp nhận của phiếu seed tính **lùi từ lúc chạy seed** (2 giờ đến 230 giờ trước), nên chạy ngày nào cũng có cả phiếu quá hạn lẫn chưa quá hạn để xem trên danh sách phiếu. Chạy seed lại không làm mới các phiếu đã có; muốn làm mới thì xóa CSDL rồi chạy lại `npm run setup`.
+Giới hạn đã biết: phiếu mẫu chỉ có `is_warranty` đúng/sai nên phiếu seed chỉ có "còn" và "hết bảo hành"; "chưa xác minh" xem bằng thiết bị không có ngày mua (ví dụ `device_id` 2 của khách `0901234567`) khi lập phiếu ở M1. Tên khách giữ nguyên dạng của bộ mẫu nên có tên viết thường hoặc không dấu.
+
+**Rút lại mẫu** (chỉ khi cần đổi quy tắc; cần `data/raw/`):
+
+```bash
+node db/tools/sample-data.js   # đọc data/raw/, ghi đè data/sample/*.csv
+```
+
+Giá trị cố định ghi ở đầu `db/tools/sample-data.js`: seed ngẫu nhiên `SEED = 20261026` (bộ sinh mulberry32), ngày neo `2026-10-26`, tình trạng bảo hành của thiết bị giữ đúng tới `2027-03-01`, 10 phiếu mỗi trung tâm. Script không đọc ngày giờ máy: chạy lại cho đúng các file như cũ.
+
+Thời điểm tiếp nhận của phiếu seed tính **lùi từ lúc chạy seed** (`hours_ago` trong `tickets.csv`, 1 đến 230 giờ trước), nên chạy ngày nào cũng có cả phiếu quá hạn lẫn chưa quá hạn. Chạy seed lại không làm mới các phiếu đã có; muốn làm mới thì xóa CSDL rồi chạy lại `npm run setup`. CSDL đã seed bằng bộ dữ liệu tự soạn cũ (trước TĐ-14) cũng phải xóa rồi setup lại: nếu không, tên trung tâm cũ và tài khoản cũ còn nguyên, trộn lẫn với dữ liệu mới. Xóa CSDL (tắt `npm run dev` trước; mất cả phiếu đã lập tay):
+
+```bash
+node -e "require('dotenv').config({quiet:true});const {Client}=require('pg');const c=new Client({host:process.env.DB_HOST,port:+process.env.DB_PORT,user:process.env.DB_USER,password:process.env.DB_PASSWORD,database:'postgres'});c.connect().then(()=>c.query('DROP DATABASE '+process.env.DB_NAME+' WITH (FORCE)')).then(()=>console.log('Đã xóa')).finally(()=>c.end())"
+npm run setup
+```
 
 ### Tài khoản demo
 
@@ -68,12 +99,12 @@ Mật khẩu chung: `Demo@2026` (chỉ lưu dạng băm bcrypt trong CSDL).
 
 | Tên đăng nhập | Vai trò | Trung tâm |
 | --- | --- | --- |
-| `mai.nk` | Tiếp nhận | 1 · Ninh Kiều |
-| `tuan.nk` | Quản lý trung tâm | 1 · Ninh Kiều |
-| `lan.q10` | Tiếp nhận | 2 · Quận 10 |
-| `hung.q10` | Quản lý trung tâm | 2 · Quận 10 |
-| `thu.vl` | Tiếp nhận | 3 · Vĩnh Long |
-| `khoa.vl` | Quản lý trung tâm | 3 · Vĩnh Long |
+| `lan.q10` | Tiếp nhận | 1 · TTBH Quận 10 |
+| `hung.q10` | Quản lý trung tâm | 1 · TTBH Quận 10 |
+| `mai.tb` | Tiếp nhận | 2 · TTBH Quận Tân Bình |
+| `tuan.tb` | Quản lý trung tâm | 2 · TTBH Quận Tân Bình |
+| `thu.td` | Tiếp nhận | 3 · TTBH TP. Thủ Đức |
+| `khoa.td` | Quản lý trung tâm | 3 · TTBH TP. Thủ Đức |
 
 ## 4. Cấu trúc thư mục
 
@@ -85,7 +116,8 @@ db/
   schema.sql           tạo bảng, chạy lại không lỗi
   migrate.js           npm run db:migrate
   seed.js              npm run db:seed
-  seeds/               dữ liệu mẫu, chạy theo số thứ tự 001_, 002_…
+  seeds/               nạp data/sample/*.csv, chạy theo số thứ tự 001_, 002_…
+  tools/               sample-data.js rút mẫu từ data/raw/; csv.js đọc/ghi CSV
 src/
   server.js            điểm khởi động: đọc .env, tạo pool, gọi createApp
   config.js            đọc biến môi trường
@@ -95,13 +127,17 @@ src/
     views/             trang EJS M1–M3, partials/ khung navbar · sidebar · footer
     styles/            tailwind.css: nguồn CSS, npm run build:css dựng ra public/css/app.css
     validators/        kiểm định dạng đầu vào (400)
-  public/js/           api-client.js gọi API JSON; script từng trang (ticket-create.js = M1)
+  public/js/           api-client.js gọi API JSON; script từng trang (ticket-create.js = M1, customer-create.js = M2, ticket-list.js = M3)
   services/            LỚP NGHIỆP VỤ: mọi quy tắc QT-xx
   domain/              thực thể (Ticket, Device…)
   repositories/        LỚP TRUY CẬP DỮ LIỆU
   errors/              AppError mang mã nghiệp vụ
 tests/                 unit test lớp services, test HTTP qua createApp với repository giả
-data/                  mẫu nhỏ, không commit dữ liệu thật
+data/
+  raw/                 bộ dữ liệu Mekong Mobile đầy đủ (gitignore, tải từ VLU e-learning)
+  sample/              mẫu nhỏ rút bằng db/tools/sample-data.js, seed đọc từ đây
+Dockerfile             ảnh máy chủ web (cách B)
+docker-compose.yml     db PostgreSQL 16 + app (cách B)
 ```
 
 Phụ thuộc một chiều: `presentation` → `services` → `repositories`; lớp dưới không gọi ngược lên lớp trên.
@@ -117,6 +153,7 @@ Phụ thuộc một chiều: `presentation` → `services` → `repositories`; l
 | ERD                          | `docs/erd.drawio`          |
 | SQL DDL                      | `db/schema.sql`            |
 | Wireframe 3 màn hình         | `docs/wireframe.png`       |
+| Thay đổi thiết kế so với BT1 | `docs/thay-doi-thiet-ke.md` |
 | Khai báo sử dụng AI          | `docs/ai-disclosure.md`    |
 
 ## 6. Kiểm thử
@@ -126,6 +163,24 @@ npm test                  # hiển thị số test PASS
 ```
 
 Test không cần PostgreSQL: lớp service dùng repository giả, test HTTP gọi `createApp(deps)` qua `supertest`. Tên test bắt đầu bằng mã yêu cầu (QT-xx, USx-ACy, FRx, NFRx…) để truy vết.
+
+### Kiểm nhanh API lập phiếu bằng `curl`
+
+Cần `npm run dev` đang chạy và dữ liệu mẫu. Body ghi ra file UTF-8 rồi gửi bằng `--data-binary` để giữ đúng tiếng Việt trên mọi hệ điều hành. Mỗi lần gửi dùng một `Idempotency-Key` khác (gửi lại cùng khóa trả phiếu cũ với mã 200).
+
+```bash
+curl -c lan.txt -H "Content-Type: application/json" -d '{"username":"lan.q10","password":"Demo@2026"}' http://localhost:3000/api/auth/login
+```
+
+| Body | Kết quả mong đợi |
+| --- | --- |
+| `{"customer_id":100001,"device_id":1,"issue_desc":"Máy không nhận sạc, cắm sạc báo lỗi phụ kiện","category_id":3,"priority":"TRUNG_BINH"}` | `201`, mã phiếu `BH…/năm`, `status` `MOI`, `warranty_status` `CON_BAO_HANH`, hạn cam kết +72 giờ bỏ qua Chủ nhật |
+| `{"customer_id":100001,"device_id":1,"issue_desc":"hỏng","priority":""}` | `400 VALIDATION_FAILED`, `fields` nêu cả `issue_desc` và `priority` |
+| `{"customer_id":100001,"device_id":3,"issue_desc":"Màn hình bị sọc xanh sau khi rơi"}` | `422 BUSINESS_RULE_VIOLATION` "Thiết bị không thuộc khách hàng này" (QT-03) |
+
+```bash
+curl -i -b lan.txt -H "Content-Type: application/json" -H "Idempotency-Key: 6f1c2a4e-8b3d-4c5e-9a7f-0b1c2d3e4f50" --data-binary @ticket.json http://localhost:3000/api/tickets
+```
 
 ### Kiểm bằng tay: lưu phiếu và lịch sử trong một giao dịch (NFR4)
 
@@ -138,7 +193,7 @@ Test không cần PostgreSQL: lớp service dùng repository giả, test HTTP g�
     CREATE TRIGGER nfr4_fail BEFORE INSERT ON ticket_status_log FOR EACH ROW EXECUTE FUNCTION nfr4_fail();
     ```
 
-2. Lập phiếu với một khóa mới (body ghi ra file UTF-8 `ticket.json`, ví dụ `{"customer_id":1,"device_id":1,"issue_desc":"Máy không nhận sạc nữa"}`):
+2. Lập phiếu với một khóa mới (body ghi ra file UTF-8 `ticket.json`, ví dụ `{"customer_id":100001,"device_id":1,"issue_desc":"Máy không nhận sạc nữa"}`):
 
     ```bash
     curl -b lan.txt -H "Content-Type: application/json" -H "Idempotency-Key: 11111111-2222-4333-8444-555555555555" --data-binary @ticket.json http://localhost:3000/api/tickets
@@ -172,5 +227,7 @@ Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui 
 - [x] API khách hàng, thiết bị, tình trạng bảo hành (API 1–5)
 - [x] API lập phiếu: mã phiếu, hạn cam kết, lịch sử đầu tiên, chống lưu trùng (API 7)
 - [x] Màn hình M1 tiếp nhận và lập phiếu: UC1, UC4, UC5 (MUST) – giao diện Tailwind, khung navbar · sidebar · footer
-- [ ] Module tạo khách hàng và ghi nhận thiết bị: UC2, UC3 (SHOULD)
-- [ ] Module danh sách phiếu của trung tâm: UC6 (SHOULD)
+- [x] Màn hình M2 tạo khách hàng và ghi nhận thiết bị: UC2, UC3 (SHOULD) – mở từ M1, lưu xong quay lại M1
+- [x] Màn hình M3 danh sách phiếu của trung tâm: UC6 (SHOULD) – tô đỏ và nhãn QUÁ HẠN, phân trang 20 dòng
+- [x] Phép thử thư mục trống: clone mới → 4 bước README → `npm test` PASS → `npm run setup` lần hai không lỗi, không nhân đôi dữ liệu
+- [x] Dockerfile + docker-compose: chạy cả hệ thống bằng `docker compose up --build`
