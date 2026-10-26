@@ -105,14 +105,14 @@ describe('determineWarrantyStatus – tình trạng bảo hành (QT-05, FR5)', (
         expect(determineWarrantyStatus(device, vn('2026-03-01T12:00')).warranty_status).toBe(WarrantyStatus.HET_BAO_HANH);
     });
 
-    test('QT-05 luồng đúng: dữ liệu seed khớp nhãn CON/HET/NULL trong suốt kỳ chấm BT2 (07/2026–03/2027)', () => {
-        const expected = { CON: WarrantyStatus.CON_BAO_HANH, HET: WarrantyStatus.HET_BAO_HANH, NULL: WarrantyStatus.CHUA_XAC_MINH };
+    test('QT-05 luồng đúng: thiết bị seed khớp nhãn is_warranty của bộ mẫu (true/false/trống) từ 26/10/2026 tới 01/03/2027', () => {
+        const expected = { true: WarrantyStatus.CON_BAO_HANH, false: WarrantyStatus.HET_BAO_HANH, '': WarrantyStatus.CHUA_XAC_MINH };
 
-        for (const now of [vn('2026-07-01T00:00'), vn('2026-11-01T09:00'), vn('2027-03-01T23:59')]) {
+        for (const now of [vn('2026-10-16T00:00'), vn('2026-11-01T09:00'), vn('2027-03-01T23:59')]) {
             for (const device of SEED_DEVICES) {
                 expect([device.serial_no, determineWarrantyStatus(device, now).warranty_status]).toEqual([
                     device.serial_no,
-                    expected[device.case],
+                    expected[device.is_warranty],
                 ]);
             }
         }

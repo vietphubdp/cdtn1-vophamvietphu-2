@@ -1,16 +1,15 @@
 'use strict';
 
-// 6 trung tâm bảo hành, khớp case study Mekong Mobile (D6). Dữ liệu giả lập.
-// service_center không có cột UNIQUE ngoài khóa chính → chèn với center_id cố định
+// 6 trung tâm bảo hành lấy nguyên từ bộ mẫu Mekong Mobile (data/sample/service_centers.csv,
+// rút từ data/raw/service_centers.csv bằng db/tools/sample-data.js – TĐ-14).
+// service_center không có cột UNIQUE ngoài khóa chính → chèn với center_id của bộ mẫu
 // để chạy lại không nhân đôi, rồi đặt lại sequence của BIGSERIAL.
-const SERVICE_CENTERS = [
-    { center_id: 1, center_name: 'Trung tâm bảo hành Ninh Kiều' },
-    { center_id: 2, center_name: 'Trung tâm bảo hành Quận 10' },
-    { center_id: 3, center_name: 'Trung tâm bảo hành Vĩnh Long' },
-    { center_id: 4, center_name: 'Trung tâm bảo hành Long Xuyên' },
-    { center_id: 5, center_name: 'Trung tâm bảo hành Mỹ Tho' },
-    { center_id: 6, center_name: 'Trung tâm bảo hành Bến Tre' },
-];
+const { readSampleCsv } = require('../tools/csv');
+
+const SERVICE_CENTERS = readSampleCsv('service_centers.csv').map((c) => ({
+    center_id: Number(c.center_id),
+    center_name: c.center_name,
+}));
 
 async function seed(client) {
     let inserted = 0;

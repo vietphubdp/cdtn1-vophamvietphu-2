@@ -1,6 +1,8 @@
 'use strict';
 
-// Tài khoản mẫu (W13, HT1): 1 Tiếp nhận + 1 Quản lý ở mỗi trung tâm trong 3 trung tâm đầu (D6).
+// Tài khoản mẫu (W13, HT1): 1 Tiếp nhận + 1 Quản lý ở mỗi trung tâm trong 3 trung tâm đầu (D6) của bộ mẫu
+// Mekong Mobile: 1 TTBH Quận 10 (.q10), 2 TTBH Quận Tân Bình (.tb), 3 TTBH TP. Thủ Đức (.td) – TĐ-14.
+// Bộ mẫu không có nhân viên tiếp nhận nên tài khoản là tự soạn.
 // Mật khẩu chỉ lưu dạng băm bcrypt; mật khẩu demo ghi trong README.
 const bcrypt = require('bcrypt');
 const { Role } = require('../../src/domain/constants');
@@ -9,12 +11,12 @@ const DEMO_PASSWORD = 'Demo@2026';
 const BCRYPT_COST = 10;
 
 const EMPLOYEES = [
-    { username: 'mai.nk', full_name: 'Phạm Thị Mai', role: Role.TIEP_NHAN, center_id: 1 },
-    { username: 'tuan.nk', full_name: 'Huỳnh Minh Tuấn', role: Role.QUAN_LY_TRUNG_TAM, center_id: 1 },
-    { username: 'lan.q10', full_name: 'Trần Thị Lan', role: Role.TIEP_NHAN, center_id: 2 },
-    { username: 'hung.q10', full_name: 'Đỗ Quốc Hùng', role: Role.QUAN_LY_TRUNG_TAM, center_id: 2 },
-    { username: 'thu.vl', full_name: 'Lý Ngọc Thư', role: Role.TIEP_NHAN, center_id: 3 },
-    { username: 'khoa.vl', full_name: 'Trương Đăng Khoa', role: Role.QUAN_LY_TRUNG_TAM, center_id: 3 },
+    { username: 'lan.q10', full_name: 'Trần Thị Lan', role: Role.TIEP_NHAN, center_id: 1 },
+    { username: 'hung.q10', full_name: 'Đỗ Quốc Hùng', role: Role.QUAN_LY_TRUNG_TAM, center_id: 1 },
+    { username: 'mai.tb', full_name: 'Phạm Thị Mai', role: Role.TIEP_NHAN, center_id: 2 },
+    { username: 'tuan.tb', full_name: 'Huỳnh Minh Tuấn', role: Role.QUAN_LY_TRUNG_TAM, center_id: 2 },
+    { username: 'thu.td', full_name: 'Lý Ngọc Thư', role: Role.TIEP_NHAN, center_id: 3 },
+    { username: 'khoa.td', full_name: 'Trương Đăng Khoa', role: Role.QUAN_LY_TRUNG_TAM, center_id: 3 },
 ];
 
 async function seed(client) {
