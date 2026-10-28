@@ -35,4 +35,5 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=6 \
     CMD node -e "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 # Mỗi lần khởi động: migrate + seed (chạy lại không lỗi, không nhân đôi – C5) rồi chạy máy chủ.
-CMD ["sh", "-c", "node db/migrate.js && node db/seed.js && node src/server.js"]
+# `exec` thay tiến trình sh bằng node (PID 1) để node nhận SIGTERM khi docker stop (BUG-003).
+CMD ["sh", "-c", "node db/migrate.js && node db/seed.js && exec node src/server.js"]

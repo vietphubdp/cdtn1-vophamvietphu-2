@@ -11,6 +11,7 @@ const { createTicketRepository } = require('./repositories/TicketRepository');
 const { createTicketStatusLogRepository } = require('./repositories/TicketStatusLogRepository');
 const { createLogger } = require('./logging/logger');
 const { createApp } = require('./app');
+const { createShutdownHandler } = require('./shutdown');
 
 const config = loadConfig();
 const logger = createLogger({ level: config.logLevel });
@@ -34,7 +35,11 @@ const app = createApp({
     withTransaction: createTransactionRunner(pool),
 });
 
-app.listen(config.port, () => {
+const server = app.listen(config.port, () => {
     logger.info(`máy chủ chạy tại http://localhost:${config.port} (kiểm tra: /health)`, { port: config.port });
 });
 
+// BUG-003: docker compose stop/down gửi SIGTERM; Ctrl+C gửi SIGINT.
+const shutdown = createShutdownHandler({ server, pool, logger });
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
