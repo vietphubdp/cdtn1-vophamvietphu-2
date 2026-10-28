@@ -1,21 +1,22 @@
 # Chạy cả hệ thống bằng Docker, không cần cài Node.js hay PostgreSQL trên máy (README mục 3, cách B):
-#   docker compose up --build      → http://localhost:3000
-#   docker compose down            (thêm -v để xóa luôn dữ liệu CSDL)
-# Không cần file .env: các biến dưới đây thay cho .env. Đổi cổng máy bằng APP_PORT=3001 docker compose up.
+#   cp .env.example .env
+#   docker compose up -d --build    → http://localhost:3000 (đổi bằng PORT trong .env)
+#   docker compose down              (thêm -v để xóa luôn dữ liệu CSDL)
+# Mật khẩu, khóa JWT lấy từ .env (không commit); tệp này không ghi cứng secret.
 
 services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: smart_crm_l2
+      POSTGRES_USER: ${DB_USER:?Thiếu .env – chạy cp .env.example .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
+      POSTGRES_DB: ${DB_NAME:?Thiếu DB_NAME trong .env}
     volumes:
       - db-data:/var/lib/postgresql/data
     # Chỉ dịch vụ app kết nối qua mạng nội bộ của compose; không mở cổng 5432 ra máy
     # để không đụng PostgreSQL đã cài sẵn trên máy.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d smart_crm_l2"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 2s
       timeout: 5s
       retries: 30
@@ -24,19 +25,19 @@ services:
     build: .
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy # chờ CSDL SẴN SÀNG, không chỉ chờ container khởi động
     environment:
       PORT: 3000
-      DB_HOST: db
+      DB_HOST: db # tên dịch vụ trong compose, không phải localhost
       DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: smart_crm_l2
-      # Khóa dùng cho bản demo; triển khai thật thì truyền JWT_SECRET từ môi trường.
-      JWT_SECRET: ${JWT_SECRET:-demo-docker-doi-chuoi-nay-khi-trien-khai-that}
-      JWT_EXPIRES_IN: 8h
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET:?Thiếu JWT_SECRET trong .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${PORT:-3000}:3000"
 
 volumes:
   db-data:

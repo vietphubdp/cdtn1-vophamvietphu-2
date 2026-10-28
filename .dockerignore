@@ -6,3 +6,5 @@ coverage/
 *.log
 src/public/css/app.css
 data/raw/
+tests/
+docs/
