@@ -37,7 +37,8 @@
 - `403` chỉ dùng khi vai trò của người gọi không được phép gọi endpoint đó (cột "Vai trò gọi được" ở mục 1).
 - Phân trang: `page` (bắt đầu từ 1) và `size` (mặc định 20, tối đa 100). Response kèm `total`.
 - Mọi lỗi trả về cùng một cấu trúc: `{ "error": { "code": "...", "message": "...", "fields": {...}, "details": {...} } }`. `fields` (lỗi theo từng trường) chỉ có ở lỗi 400; `details` (dữ liệu bổ sung, ví dụ `customer_id` của hồ sơ đã có) chỉ có khi cần; cả hai đều có thể vắng mặt.
-- Mã lỗi dùng chung: `400 VALIDATION_FAILED`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 CONFLICT`, `422 BUSINESS_RULE_VIOLATION`, `500 INTERNAL_ERROR` (thông báo chung, không lộ stack trace, tên bảng hay câu SQL).
+- Mã lỗi dùng chung: `400 VALIDATION_FAILED`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 NOT_FOUND`, `409 CONFLICT`, `422 BUSINESS_RULE_VIOLATION`, `500 INTERNAL_ERROR` (thông báo chung, không lộ stack trace, tên bảng hay câu SQL; cuối thông báo có "Mã tra cứu: <requestId>" để đối chiếu log).
+- Mọi phản hồi (trừ `/health` và tệp tĩnh) có header `X-Request-Id`: mã tương quan của yêu cầu, trùng với `requestId` trong log máy chủ (TĐ-15).
 
 ### 3. Chi tiết endpoint
 
