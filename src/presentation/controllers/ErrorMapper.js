@@ -1,6 +1,7 @@
 'use strict';
 
 const { AppError, ErrorCode } = require('../../errors/AppError');
+const { requestPath } = require('./RequestLogger');
 
 // Bản đồ mã nghiệp vụ → mã HTTP (api-contract mục 2). Chỉ nơi này biết mã HTTP của lỗi.
 const HTTP_STATUS_BY_CODE = Object.freeze({
@@ -62,22 +63,27 @@ function toHttpError(err) {
 }
 
 /**
- * Middleware xử lý lỗi cuối chuỗi Express.
- * Lỗi người dùng: không ghi log mức error. Lỗi hệ thống: ghi log đủ ngữ cảnh, trả 500 chung.
+ * Middleware xử lý lỗi cuối chuỗi Express – nơi DUY NHẤT ghi log lỗi.
+ * Lỗi người dùng: không ghi log mức error (RequestLogger ghi INFO kèm mã lỗi).
+ * Lỗi hệ thống: ghi log ERROR một lần, kèm requestId; trả 500 chung có mã tra cứu.
  */
-function createErrorMiddleware(logger = console) {
+function createErrorMiddleware(logger) {
     // Express nhận ra middleware xử lý lỗi nhờ đủ 4 tham số.
     // eslint-disable-next-line no-unused-vars
     return function errorMiddleware(err, req, res, next) {
         const { status, body } = toHttpError(err);
         if (status === 500) {
-            logger.error('[500]', {
+            // Ghi đường dẫn không kèm query: query có thể chứa số điện thoại (BUG-001, QT-15).
+            logger.error('lỗi hệ thống', {
+                requestId: req.requestId,
                 method: req.method,
-                url: req.originalUrl,
+                path: requestPath(req),
                 employee_id: req.caller ? req.caller.employee_id : undefined,
                 error: err,
             });
+            if (req.requestId) body.error.message += ` Mã tra cứu: ${req.requestId}.`;
         }
+        res.locals.errorCode = body.error.code;
         res.status(status).json(body);
     };
 }

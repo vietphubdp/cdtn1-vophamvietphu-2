@@ -3,7 +3,9 @@
 const path = require('path');
 const express = require('express');
 const { AppError, ErrorCode } = require('./errors/AppError');
+const { createLogger } = require('./logging/logger');
 const { createErrorMiddleware } = require('./presentation/controllers/ErrorMapper');
+const { createRequestLogger } = require('./presentation/controllers/RequestLogger');
 const { createAuthService } = require('./services/AuthService');
 const { createAuthController } = require('./presentation/controllers/AuthController');
 const { createPageController } = require('./presentation/controllers/PageController');
@@ -33,10 +35,10 @@ const {
  * @param {object} deps.jwt              { secret, expiresIn }
  * @param {Function} deps.withTransaction helper giao dịch withTransaction(work) (NFR4, QT-06)
  * @param {Function} [deps.now]          đồng hồ, mặc định () => new Date(); test truyền giờ cố định
- * @param {object} [deps.logger]         mặc định console
+ * @param {object} [deps.logger]         logger JSON ra stdout (src/logging/logger.js); test truyền logger giả
  */
 function createApp(deps) {
-    const logger = deps.logger || console;
+    const logger = deps.logger || createLogger();
     const now = deps.now || (() => new Date());
     const { repositories } = deps;
 
@@ -78,13 +80,16 @@ function createApp(deps) {
     app.set('view engine', 'ejs');
     app.set('views', path.join(__dirname, 'presentation', 'views'));
 
-    app.use(express.json());
     app.use('/public', express.static(path.join(__dirname, 'public')));
 
-    // Smoke test: máy chủ đang chạy.
+    // Smoke test: máy chủ đang chạy. Đặt trước RequestLogger để healthcheck của Docker không làm ngập log.
     app.get('/health', (req, res) => {
         res.json({ status: 'ok' });
     });
+
+    // Gắn requestId trước khi đọc body, để cả lỗi JSON hỏng cũng có mã tra cứu.
+    app.use(createRequestLogger({ logger }));
+    app.use(express.json());
 
     // Trang EJS
     app.get('/login', pageController.login);

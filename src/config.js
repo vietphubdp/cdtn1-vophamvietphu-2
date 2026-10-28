@@ -28,6 +28,7 @@ function loadDbConfig() {
 function loadConfig() {
     return {
         port: Number(process.env.PORT || 3000),
+        logLevel: process.env.LOG_LEVEL || 'info',
         db: loadDbConfig(),
         jwt: {
             secret: requireEnv('JWT_SECRET'),

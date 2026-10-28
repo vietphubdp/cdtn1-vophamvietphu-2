@@ -9,12 +9,15 @@ const { createCustomerRepository } = require('./repositories/CustomerRepository'
 const { createDeviceRepository } = require('./repositories/DeviceRepository');
 const { createTicketRepository } = require('./repositories/TicketRepository');
 const { createTicketStatusLogRepository } = require('./repositories/TicketStatusLogRepository');
+const { createLogger } = require('./logging/logger');
 const { createApp } = require('./app');
 
 const config = loadConfig();
+const logger = createLogger({ level: config.logLevel });
 const pool = createPool(config.db);
 
 const app = createApp({
+    logger,
     repositories: {
         employee: createEmployeeRepository(pool),
         product: createProductRepository(pool),
@@ -29,5 +32,6 @@ const app = createApp({
 });
 
 app.listen(config.port, () => {
-    console.log(`Máy chủ chạy tại http://localhost:${config.port} (kiểm tra: /health)`);
+    logger.info(`máy chủ chạy tại http://localhost:${config.port} (kiểm tra: /health)`, { port: config.port });
 });
+
