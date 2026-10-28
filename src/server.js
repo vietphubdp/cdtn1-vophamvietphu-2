@@ -14,7 +14,10 @@ const { createApp } = require('./app');
 
 const config = loadConfig();
 const logger = createLogger({ level: config.logLevel });
-const pool = createPool(config.db);
+const pool = createPool(config.db, {
+    // BUG-002: ghi log rồi chạy tiếp; yêu cầu sau pool tự mở kết nối mới.
+    onIdleError: (err) => logger.error('CSDL ngắt một kết nối đang rảnh; yêu cầu sau sẽ mở kết nối mới', { error: err }),
+});
 
 const app = createApp({
     logger,

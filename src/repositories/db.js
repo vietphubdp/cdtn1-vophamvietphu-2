@@ -14,9 +14,23 @@ types.setTypeParser(PG_DATE_OID, (value) => value);
 const PG_BIGINT_OID = 20;
 types.setTypeParser(PG_BIGINT_OID, (value) => Number.parseInt(value, 10));
 
-/** Tạo pool kết nối từ cấu hình { host, port, user, password, database }. */
-function createPool(dbConfig) {
-    return new Pool(dbConfig);
+/**
+ * Tạo pool kết nối từ cấu hình { host, port, user, password, database }.
+ * PostgreSQL ngắt một kết nối đang rảnh (khởi động lại dịch vụ, container db restart) thì pool
+ * phát sự kiện 'error'; không có ai nghe là cả tiến trình sập (BUG-002). Pool tự bỏ kết nối hỏng
+ * và mở kết nối mới ở yêu cầu sau, nên chỉ cần báo cho onIdleError (server.js ghi log), không thoát.
+ *
+ * @param {object} dbConfig
+ * @param {object} options
+ * @param {Function} options.onIdleError bắt buộc: nhận lỗi của kết nối đang rảnh
+ */
+function createPool(dbConfig, { onIdleError } = {}) {
+    if (typeof onIdleError !== 'function') {
+        throw new Error('createPool cần onIdleError: không nghe lỗi kết nối rảnh thì máy chủ sập khi CSDL khởi động lại.');
+    }
+    const pool = new Pool(dbConfig);
+    pool.on('error', (err) => onIdleError(err));
+    return pool;
 }
 
 /**
