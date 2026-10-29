@@ -86,6 +86,68 @@ function createTicketRepository(pool) {
             return result.rows;
         },
 
+        /**
+         * Một phiếu kèm tên khách, số điện thoại (chưa che), tên máy, serial, tên nhóm sự cố (API 18).
+         * Không lọc trung tâm: TicketQueryService so trung tâm với người gọi (QT-14). Không có → null.
+         */
+        async findDetailById(ticketId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT t.ticket_id, t.ticket_code, t.customer_id, c.full_name AS customer_name, c.phone,
+                        t.device_id, p.product_name, d.serial_no, t.center_id, t.category_id, ic.category_name,
+                        t.issue_desc, t.priority, t.status, t.warranty_status, t.received_at, t.due_date
+                   FROM ticket t
+                   JOIN customer c ON c.customer_id = t.customer_id
+                   JOIN device d ON d.device_id = t.device_id
+                   JOIN product p ON p.product_id = d.product_id
+                   LEFT JOIN issue_category ic ON ic.category_id = t.category_id
+                  WHERE t.ticket_id = $1`,
+                [ticketId],
+            );
+            return result.rows[0] || null;
+        },
+
+        /**
+         * Đọc phiếu và khóa dòng tới hết giao dịch (SELECT … FOR UPDATE) để hai người sửa, hủy cùng
+         * một phiếu không ghi đè nhau: người sau chờ người trước commit rồi đọc bản mới. Cần `tx`.
+         */
+        async findByIdForUpdate(ticketId, tx) {
+            const result = await tx.query(
+                `SELECT ${TICKET_COLUMNS}
+                   FROM ticket
+                  WHERE ticket_id = $1
+                    FOR UPDATE`,
+                [ticketId],
+            );
+            return result.rows[0] || null;
+        },
+
+        /**
+         * Ghi các cột được phép đổi sau khi lập (API 19–21). Service truyền đủ giá trị mới của cả 7 cột;
+         * mã phiếu, khách, trung tâm, thời điểm tiếp nhận, khóa chống trùng không bao giờ đổi.
+         */
+        async update(ticketId, ticket, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `UPDATE ticket
+                    SET device_id = $2, category_id = $3, issue_desc = $4, priority = $5,
+                        status = $6, warranty_status = $7, due_date = $8
+                  WHERE ticket_id = $1
+                 RETURNING ${TICKET_COLUMNS}`,
+                [
+                    ticketId,
+                    ticket.device_id,
+                    ticket.category_id,
+                    ticket.issue_desc,
+                    ticket.priority,
+                    ticket.status,
+                    ticket.warranty_status,
+                    ticket.due_date,
+                ],
+            );
+            return result.rows[0];
+        },
+
         /** Tổng số phiếu của một trung tâm (trường `total` của API 8). */
         async countByCenter(centerId, tx) {
             const db = tx || pool;

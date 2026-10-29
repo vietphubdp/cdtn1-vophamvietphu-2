@@ -19,6 +19,7 @@ const { createWarrantyService } = require('./services/WarrantyService');
 const { createDeviceController } = require('./presentation/controllers/DeviceController');
 const { createTicketService } = require('./services/TicketService');
 const { createTicketQueryService } = require('./services/TicketQueryService');
+const { createTicketUpdateService } = require('./services/TicketUpdateService');
 const { createTicketController } = require('./presentation/controllers/TicketController');
 const {
     createApiAuthMiddleware,
@@ -31,7 +32,7 @@ const {
  *
  * @param {object} deps
  * @param {object} deps.repositories     repository thật hoặc giả:
- *   { employee, product, issueCategory, customer, device, ticket, ticketStatusLog }
+ *   { employee, product, issueCategory, customer, device, ticket, ticketStatusLog, ticketEditLog }
  * @param {object} deps.jwt              { secret, expiresIn }
  * @param {Function} deps.withTransaction helper giao dịch withTransaction(work) (NFR4, QT-06)
  * @param {Function} [deps.now]          đồng hồ, mặc định () => new Date(); test truyền giờ cố định
@@ -62,14 +63,26 @@ function createApp(deps) {
         issueCategoryRepository: repositories.issueCategory,
         withTransaction: deps.withTransaction,
     });
-    const ticketQueryService = createTicketQueryService({ ticketRepository: repositories.ticket });
+    const ticketQueryService = createTicketQueryService({
+        ticketRepository: repositories.ticket,
+        ticketStatusLogRepository: repositories.ticketStatusLog,
+        ticketEditLogRepository: repositories.ticketEditLog,
+    });
+    const ticketUpdateService = createTicketUpdateService({
+        ticketRepository: repositories.ticket,
+        ticketStatusLogRepository: repositories.ticketStatusLog,
+        ticketEditLogRepository: repositories.ticketEditLog,
+        deviceRepository: repositories.device,
+        issueCategoryRepository: repositories.issueCategory,
+        withTransaction: deps.withTransaction,
+    });
 
     const authController = createAuthController({ authService, now });
     const productController = createProductController({ catalogService });
     const categoryController = createCategoryController({ catalogService });
     const customerController = createCustomerController({ customerService });
     const deviceController = createDeviceController({ deviceService, warrantyService, now });
-    const ticketController = createTicketController({ ticketService, ticketQueryService, now });
+    const ticketController = createTicketController({ ticketService, ticketQueryService, ticketUpdateService, now });
     const pageController = createPageController({ authService, now });
     const requireApiLogin = createApiAuthMiddleware({ authService, now });
     const requirePageLogin = createPageAuthMiddleware({ authService, now });
@@ -97,6 +110,7 @@ function createApp(deps) {
     app.get('/tickets/new', requirePageLogin, pageController.ticketCreate); // M1
     app.get('/customers/new', requirePageLogin, pageController.customerCreate); // M2
     app.get('/tickets', requirePageLogin, pageController.ticketList); // M3
+    app.get('/tickets/:id', requirePageLogin, pageController.ticketDetail); // M4 (TĐ-02, TĐ-03)
 
     // API 9, 10 không cần JWT (api-contract mục 2).
     app.post('/api/auth/login', authController.login);
@@ -117,6 +131,12 @@ function createApp(deps) {
     // Phiếu bảo hành: API 7 lập phiếu (UC5), API 8 danh sách phiếu của trung tâm (UC6).
     app.get('/api/tickets', ticketController.list);
     app.post('/api/tickets', ticketController.create);
+
+    // Chi tiết, sửa, hủy phiếu, quyết định bảo hành: API 18–21 (TĐ-02, TĐ-03 · QT-06, QT-16, QT-17).
+    app.get('/api/tickets/:id', ticketController.detail);
+    app.patch('/api/tickets/:id', ticketController.update);
+    app.post('/api/tickets/:id/cancel', ticketController.cancel);
+    app.post('/api/tickets/:id/warranty-decision', ticketController.decideWarranty);
 
     // Danh mục nhóm sự cố: API 6, 15–17 (HT2). Không có xóa vật lý: DELETE = ngừng dùng (QT-13).
     app.get('/api/issue-categories', categoryController.list);

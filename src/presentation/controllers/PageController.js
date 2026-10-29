@@ -11,6 +11,9 @@ const PAGE_PATH = Object.freeze({
     M3: '/tickets',
 });
 
+// Mã phiếu trên đường dẫn M4: chỉ chữ số. Sai thì về M3 thay vì render trang cho mã không có.
+const TICKET_ID_PATTERN = /^[1-9][0-9]{0,15}$/;
+
 /**
  * Chỉ render khung trang EJS; dữ liệu trên trang lấy qua API JSON bằng api-client.js.
  * Navbar, sidebar lấy tên trung tâm, họ tên, vai trò từ JWT (req.caller), không tra CSDL (D5).
@@ -62,6 +65,15 @@ function createPageController({ authService, now }) {
         /** M3 – Danh sách phiếu của trung tâm (UC6) cho cả hai vai trò; trang và số trang do ticket-list.js đọc từ ?page=. */
         ticketList(req, res) {
             res.render('ticket-list', layoutLocals(req.caller, 'M3'));
+        },
+
+        /**
+         * M4 – Chi tiết phiếu: sửa phiếu (QT-16) cho cả hai vai trò; hủy phiếu (QT-06), quyết định bảo hành (QT-17)
+         * cho Quản lý. Chỉ mở từ M3 nên sidebar vẫn sáng mục M3. Dữ liệu và quyền thao tác lấy qua API 18.
+         */
+        ticketDetail(req, res) {
+            if (!TICKET_ID_PATTERN.test(req.params.id)) return res.redirect(PAGE_PATH.M3);
+            return res.render('ticket-detail', { ...layoutLocals(req.caller, 'M3'), ticketId: req.params.id });
         },
     };
 }

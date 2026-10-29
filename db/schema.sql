@@ -95,6 +95,18 @@ CREATE TABLE IF NOT EXISTS ticket_status_log (
         'DANG_XU_LY', 'CHO_LINH_KIEN', 'HOAN_TAT', 'DA_DONG', 'DA_HUY'))
 );
 
+-- TĐ-02, TĐ-03: lịch sử sửa phiếu (QT-16) và quyết định bảo hành của Quản lý (QT-17).
+-- Chỉ ghi thêm, không sửa, không xóa. changes: { "<cột>": { "from": ..., "to": ... } }.
+CREATE TABLE IF NOT EXISTS ticket_edit_log (
+    edit_id     BIGSERIAL    PRIMARY KEY,
+    ticket_id   BIGINT       NOT NULL REFERENCES ticket (ticket_id),
+    changed_at  TIMESTAMPTZ  NOT NULL DEFAULT now(),
+    changed_by  BIGINT       NOT NULL REFERENCES employee (employee_id),
+    changes     JSONB        NOT NULL,
+    reason      VARCHAR(255) NOT NULL
+                CHECK (char_length(reason) BETWEEN 5 AND 255)
+);
+
 -- Sinh số thứ tự cho mã phiếu BH000123/2026, an toàn khi nhiều người lưu cùng lúc
 CREATE SEQUENCE IF NOT EXISTS ticket_code_seq;
 
@@ -105,5 +117,7 @@ CREATE INDEX IF NOT EXISTS idx_device_customer
     ON device (customer_id);                      -- FR3
 CREATE INDEX IF NOT EXISTS idx_log_ticket
     ON ticket_status_log (ticket_id, changed_at); -- FR6
+CREATE INDEX IF NOT EXISTS idx_edit_log_ticket
+    ON ticket_edit_log (ticket_id, changed_at);   -- FR12
 -- Các cột UNIQUE (customer.phone, device.serial_no, ticket.idempotency_key)
 -- được PostgreSQL tự tạo index: phục vụ FR1 + NFR1, QT-03, NFR4.

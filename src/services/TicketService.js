@@ -218,4 +218,4 @@ function createTicketService({
     };
 }
 
-module.exports = { createTicketService, canCreateTicket, formatTicketCode, resolvePriority, MESSAGES };
+module.exports = { createTicketService, canCreateTicket, formatTicketCode, resolvePriority, toTicketDto, MESSAGES };

@@ -41,9 +41,9 @@ describe('M1 · Lập phiếu bảo hành (UC5)', () => {
 
         expect(res.status).toBe(200);
         expect(res.headers['content-type']).toMatch(/text\/html/);
-        expect(res.text).toContain('(1) Trung tâm: <span class="font-medium text-neutral-900">Trung tâm bảo hành Quận 10</span>');
-        for (const label of ['(2) Số điện thoại khách *', '(6) Tên máy', '(7) Serial/IMEI', '(8) Ngày mua',
-            '(9) Tình trạng bảo hành', '(10) Mô tả lỗi *', '(11) Nhóm sự cố', '(12) Mức ưu tiên',
+        expect(res.text).toContain('Trung tâm: <span class="font-medium text-neutral-900">Trung tâm bảo hành Quận 10</span>');
+        for (const label of ['Số điện thoại khách *', 'Tên máy', 'Serial/IMEI', 'Ngày mua',
+            'Tình trạng bảo hành', 'Mô tả lỗi *', 'Nhóm sự cố', 'Mức ưu tiên',
             'Thoát không lưu', 'Lưu phiếu']) {
             expect(res.text).toContain(label);
         }
@@ -87,9 +87,9 @@ describe('M2 · Tạo khách hàng mới / Ghi nhận thiết bị mới (UC2, U
         const res = await agent.get('/customers/new?phone=0901234567');
 
         expect(res.status).toBe(200);
-        for (const label of ['Tạo khách hàng mới', '(1) Họ tên *', '(2) Số điện thoại *', '(3) Email', '(4) Địa chỉ',
-            'Lưu khách hàng', 'Ghi nhận thiết bị mới', '(5) Tên máy *', '(6) Serial/IMEI *', '(7) Ngày mua',
-            '(8) Số tháng bảo hành', 'Lưu thiết bị']) {
+        for (const label of ['Tạo khách hàng mới', 'Họ tên *', 'Số điện thoại *', 'Email', 'Địa chỉ',
+            'Lưu khách hàng', 'Ghi nhận thiết bị mới', 'Tên máy *', 'Serial/IMEI *', 'Ngày mua',
+            'Số tháng bảo hành', 'Lưu thiết bị']) {
             expect(res.text).toContain(label);
         }
         expect(res.text).toContain('placeholder="dd/mm/yyyy"');
@@ -105,7 +105,7 @@ describe('M2 · Tạo khách hàng mới / Ghi nhận thiết bị mới (UC2, U
         expect(res.text).toContain('<option value="">Đang tải…</option>');
         expect(res.text).toContain('Chưa có sản phẩm nào đang sử dụng');
         expect(res.text).toContain('Không tải được danh mục sản phẩm');
-        expect(res.text).toContain('Số điện thoại đã tồn tại (QT-01)');
+        expect(res.text).toContain('Số điện thoại đã tồn tại.');
         expect(res.text).toContain('Mở hồ sơ có sẵn');
     });
 
@@ -126,9 +126,9 @@ describe('M2 · Tạo khách hàng mới / Ghi nhận thiết bị mới (UC2, U
 });
 
 describe('M3 · Danh sách phiếu của trung tâm (UC6)', () => {
-    const COLUMNS = ['(1) Mã phiếu', '(2) Khách hàng', '(3) Số điện thoại', '(4) Tên máy', '(5) Serial/IMEI',
-        '(6) Nhóm sự cố', '(7) Mức ưu tiên', '(8) Tình trạng bảo hành', '(9) Trạng thái', '(10) Tiếp nhận lúc',
-        '(11) Hạn cam kết', '(12) Quá hạn'];
+    const COLUMNS = ['Mã phiếu', 'Khách hàng', 'Số điện thoại', 'Tên máy', 'Serial/IMEI',
+        'Nhóm sự cố', 'Mức ưu tiên', 'Tình trạng bảo hành', 'Trạng thái', 'Tiếp nhận lúc',
+        'Hạn cam kết', 'Quá hạn'];
 
     test('US7 luồng đúng: Tiếp nhận mở M3 → bảng đủ 12 cột của wireframe, tên trung tâm từ JWT, script gọi API', async () => {
         const deps = createTestDeps();
@@ -156,7 +156,7 @@ describe('M3 · Danh sách phiếu của trung tâm (UC6)', () => {
         expect(res.text).toContain('Không tải được danh sách phiếu');
         expect(res.text).toContain('« Trước');
         expect(res.text).toContain('Sau »');
-        expect(res.text).toContain('Dòng tô đỏ = phiếu quá hạn (hạn cam kết đã qua, chưa Hoàn tất / Đã đóng – FR11)');
+        expect(res.text).toContain('Dòng tô đỏ = phiếu quá hạn (hạn cam kết đã qua, chưa Hoàn tất, Đã đóng hoặc Đã hủy)');
         expect(res.text).toContain('overflow-x-auto'); // UI6: bảng cuộn ngang
     });
 

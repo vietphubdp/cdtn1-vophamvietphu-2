@@ -131,10 +131,10 @@ src/
   app.js               createApp(deps): ghép các lớp, không có logic
   presentation/        LỚP TRÌNH BÀY
     controllers/       PageController + API controller + ErrorMapper (log lỗi một chỗ) + RequestLogger (requestId)
-    views/             trang EJS M1–M3, partials/ khung navbar · sidebar · footer
+    views/             trang EJS M1–M4, partials/ khung navbar · sidebar · footer
     styles/            tailwind.css: nguồn CSS, npm run build:css dựng ra public/css/app.css
     validators/        kiểm định dạng đầu vào (400)
-  public/js/           api-client.js gọi API JSON; script từng trang (ticket-create.js = M1, customer-create.js = M2, ticket-list.js = M3)
+  public/js/           api-client.js gọi API JSON; script từng trang (ticket-create.js = M1, customer-create.js = M2, ticket-list.js = M3, ticket-detail.js = M4)
   services/            LỚP NGHIỆP VỤ: mọi quy tắc QT-xx
   domain/              hằng số danh mục dùng chung (MOI, CAO, CON_BAO_HANH…)
   repositories/        LỚP TRUY CẬP DỮ LIỆU
@@ -183,6 +183,15 @@ EOF
 curl -i -b lan.txt -H "Content-Type: application/json" -H "Idempotency-Key: $(node -e "console.log(crypto.randomUUID())")" --data-binary @ticket.json http://localhost:3000/api/tickets
 ```
 
+### Kiểm bằng tay: sửa phiếu, hủy phiếu, quyết định bảo hành (M4 – TĐ-02, TĐ-03)
+
+CSDL đã tạo từ trước bản này thì chạy `npm run db:migrate` một lần để thêm bảng `ticket_edit_log` (chạy lại không lỗi; `npm run setup` đã gồm bước này). Thiếu bảng này thì trang chi tiết phiếu báo "Không tải được phiếu".
+
+1. Đăng nhập `lan.q10` → Danh sách phiếu → bấm mã phiếu để mở trang chi tiết. Sửa mức ưu tiên, nhập lý do, bấm **Lưu thay đổi**: hạn cam kết tính lại từ thời điểm tiếp nhận, mục **Lịch sử phiếu** có dòng "Sửa phiếu" kèm giá trị cũ → mới và lý do. Lưu lại mà không đổi gì → báo "Không có thay đổi nào".
+2. Lập một phiếu ở trang Lập phiếu cho khách `0901234567`, chọn thiết bị **không có ngày mua** → phiếu "Chưa xác minh bảo hành".
+3. Đăng xuất, đăng nhập `hung.q10` (Quản lý) → mở phiếu vừa lập: có thêm khối **Quyết định bảo hành** và **Hủy phiếu**. Chọn kết quả, nhập lý do, lưu → khối quyết định biến mất. Hủy phiếu → trạng thái Đã hủy, phiếu chỉ còn xem được.
+4. Đăng nhập `mai.tb` (trung tâm khác), mở `/tickets/<mã phiếu trên>` → "Không tìm thấy phiếu này trong trung tâm của bạn".
+
 ### Kiểm bằng tay: lưu phiếu và lịch sử trong một giao dịch (NFR4)
 
 `npm test` chỉ kiểm được rằng ghi phiếu và ghi lịch sử nằm trong cùng một lần `withTransaction`. Rollback thật trên PostgreSQL kiểm bằng tay như sau (cần `npm run dev` đang chạy, đã đăng nhập `lan.q10` và lưu cookie vào `lan.txt`):
@@ -230,6 +239,7 @@ Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui 
 - [x] Màn hình M1 tiếp nhận và lập phiếu: UC1, UC4, UC5 (MUST) – giao diện Tailwind, khung navbar · sidebar · footer
 - [x] Màn hình M2 tạo khách hàng và ghi nhận thiết bị: UC2, UC3 (SHOULD) – mở từ M1, lưu xong quay lại M1
 - [x] Màn hình M3 danh sách phiếu của trung tâm: UC6 (SHOULD) – tô đỏ và nhãn QUÁ HẠN, phân trang 20 dòng
+- [x] Màn hình M4 chi tiết phiếu: sửa phiếu còn Mới kèm lý do và lịch sử sửa (US8, QT-16); Quản lý hủy phiếu (US9, QT-06) và quyết định bảo hành phiếu chưa xác minh (US10, QT-17) – API 18–21 (TĐ-02, TĐ-03, theo góp ý demo buổi 12)
 - [x] Phép thử thư mục trống: clone mới → 4 bước README → `npm test` PASS → `npm run setup` lần hai không lỗi, không nhân đôi dữ liệu
 - [x] Dockerfile hai giai đoạn, người dùng không đặc quyền, HEALTHCHECK; compose lấy secret từ `.env`: `cp .env.example .env` rồi `docker compose up -d --build` (TĐ-16)
 - [x] Ảnh minh chứng chạy toàn luồng trên dữ liệu mẫu, lưu ở `docs/screenshots/` (mục 7)

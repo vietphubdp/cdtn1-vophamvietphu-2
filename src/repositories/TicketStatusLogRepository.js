@@ -20,6 +20,20 @@ function createTicketStatusLogRepository(pool) {
             );
             return result.rows[0];
         },
+
+        /** Lịch sử trạng thái của một phiếu, cũ trước mới sau, kèm họ tên người thực hiện (API 18). */
+        async listByTicket(ticketId, tx) {
+            const db = tx || pool;
+            const result = await db.query(
+                `SELECT l.log_id, l.from_status, l.to_status, l.changed_at, e.full_name AS changed_by_name, l.note
+                   FROM ticket_status_log l
+                   JOIN employee e ON e.employee_id = l.changed_by
+                  WHERE l.ticket_id = $1
+                  ORDER BY l.changed_at, l.log_id`,
+                [ticketId],
+            );
+            return result.rows;
+        },
     };
 }
 

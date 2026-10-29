@@ -1,6 +1,6 @@
 ## Mẫu đặc tả riêng của track SE: Hợp đồng API
 
-> Bản cập nhật cho BT2. Endpoint 1–9 giữ nguyên số thứ tự của bản BT1; endpoint 10–17 là bổ sung. Danh sách thay đổi và lý do ở `docs/thay-doi-thiet-ke.md`.
+> Bản cập nhật cho BT2. Endpoint 1–9 giữ nguyên số thứ tự của bản BT1; endpoint 10–17 là bổ sung; endpoint 18–21 bổ sung theo TĐ-02, TĐ-03 (sửa, hủy phiếu, quyết định bảo hành). Danh sách thay đổi và lý do ở `docs/thay-doi-thiet-ke.md`.
 
 ### 1. Danh sách endpoint
 
@@ -23,6 +23,10 @@
 | 15  | POST        | `/api/issue-categories`             | Thêm nhóm sự cố                                                | HT2, NFR5        | Quản lý                         |
 | 16  | PUT         | `/api/issue-categories/{id}`        | Sửa nhóm sự cố, đổi mức ưu tiên mặc định                       | HT2, NFR5        | Quản lý                         |
 | 17  | DELETE      | `/api/issue-categories/{id}`        | Ngừng sử dụng nhóm sự cố (`is_active = false`, QT-13)          | HT2              | Quản lý                         |
+| 18  | GET         | `/api/tickets/{id}`                 | Chi tiết phiếu, lịch sử và các thao tác người gọi được làm     | US8–US10         | Tiếp nhận, Quản lý              |
+| 19  | PATCH       | `/api/tickets/{id}`                 | Sửa phiếu còn MỚI (QT-16)                                      | US8              | Tiếp nhận, Quản lý              |
+| 20  | POST        | `/api/tickets/{id}/cancel`          | Hủy phiếu (QT-06)                                              | US9              | Quản lý                         |
+| 21  | POST        | `/api/tickets/{id}/warranty-decision` | Quyết định bảo hành cho phiếu chưa xác minh (QT-17)          | US10             | Quản lý                         |
 
 ### 2. Quy ước chung
 
@@ -32,7 +36,7 @@
 - Tên trường dùng snake_case, trùng tên cột trong cơ sở dữ liệu (ERD) để dễ truy vết.
 - Thời gian dùng chuẩn ISO 8601 kèm múi giờ, ví dụ `2026-10-08T14:30:00+07:00`; ngày dùng `YYYY-MM-DD`. Mọi quy tắc theo ngày (thứ trong tuần ở QT-04, ngày hết bảo hành ở QT-05, ngày mua không ở tương lai, năm trong mã phiếu) tính theo giờ Việt Nam (UTC+7), không theo giờ của máy chủ.
 - Số điện thoại nhận vào ở nhiều dạng (QT-02), lưu và trả về dạng 10 chữ số. Với vai trò Tiếp nhận, mọi số điện thoại trả về đều ở dạng che (`090****567`), kể cả trong response của endpoint 3; chỉ vai trò Quản lý nhận số đầy đủ (NFR2, QT-15).
-- Phiếu bảo hành chỉ trả theo trung tâm của người gọi (QT-14): endpoint 8 luôn lọc theo trung tâm trong JWT, không nhận trung tâm từ tham số. Khách hàng, thiết bị và danh mục là dữ liệu dùng chung toàn công ty (khách đến trung tâm nào cũng được tiếp nhận), nên không lọc theo trung tâm.
+- Phiếu bảo hành chỉ trả theo trung tâm của người gọi (QT-14): endpoint 8 luôn lọc theo trung tâm trong JWT, không nhận trung tâm từ tham số; endpoint 18–21 trả `404` khi phiếu không có hoặc thuộc trung tâm khác (không để lộ phiếu của trung tâm khác). Khách hàng, thiết bị và danh mục là dữ liệu dùng chung toàn công ty (khách đến trung tâm nào cũng được tiếp nhận), nên không lọc theo trung tâm.
 - Danh mục (sản phẩm, nhóm sự cố) không bao giờ bị xóa vật lý (QT-13): `DELETE` chỉ đặt `is_active = false`. Endpoint 6 và 11 mặc định chỉ trả mục đang sử dụng; Quản lý thêm `?include_inactive=true` để xem cả mục đã ngừng.
 - `403` chỉ dùng khi vai trò của người gọi không được phép gọi endpoint đó (cột "Vai trò gọi được" ở mục 1).
 - Phân trang: `page` (bắt đầu từ 1) và `size` (mặc định 20, tối đa 100). Response kèm `total`.
@@ -277,6 +281,79 @@ Nhóm sự cố: thay đường dẫn bằng `/api/issue-categories`, trường 
 
 Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đã tồn tại · 403 không phải vai trò Quản lý (thêm, sửa, ngừng dùng) · 401.
 
+#### 3.12. `GET /api/tickets/{id}` · Chi tiết phiếu · US8–US10
+
+Trả thông tin như một dòng của endpoint 8, thêm `customer_id`, `device_id`, `category_id`, `issue_desc`, ba cờ thao tác và hai lịch sử. Số điện thoại che theo vai trò (QT-15). Ba cờ do service tính theo vai trò, trung tâm, trạng thái phiếu; giao diện chỉ dùng để ẩn/hiện nút, quyền thật kiểm lại ở endpoint 19–21.
+
+```json
+{
+    "ticket_id": 88231,
+    "ticket_code": "BH000231/2026",
+    "customer_id": 1024,
+    "customer_name": "Nguyễn Văn An",
+    "phone": "090****567",
+    "device_id": 3311,
+    "product_name": "Samsung Galaxy A55",
+    "serial_no": "SN-A55-778901",
+    "category_id": 3,
+    "category_name": "Sạc",
+    "issue_desc": "Máy không nhận sạc, cắm sạc báo lỗi phụ kiện",
+    "priority": "CAO",
+    "status": "MOI",
+    "warranty_status": "CON_BAO_HANH",
+    "received_at": "2026-10-08T14:30:00+07:00",
+    "due_date": "2026-10-09T14:30:00+07:00",
+    "is_overdue": false,
+    "can_edit": true,
+    "can_cancel": false,
+    "can_decide_warranty": false,
+    "status_history": [
+        { "from_status": null, "to_status": "MOI", "changed_at": "2026-10-08T14:30:00+07:00", "changed_by_name": "Trần Thị Lan", "note": null }
+    ],
+    "edit_history": [
+        {
+            "changed_at": "2026-10-09T10:00:00+07:00",
+            "changed_by_name": "Trần Thị Lan",
+            "changes": {
+                "priority": { "from": "TRUNG_BINH", "to": "CAO" },
+                "due_date": { "from": "2026-10-12T14:30:00+07:00", "to": "2026-10-09T14:30:00+07:00" }
+            },
+            "reason": "Khách cần gấp"
+        }
+    ]
+}
+```
+
+| Cờ | Đúng khi |
+| --- | --- |
+| `can_edit` | Phiếu của trung tâm mình, trạng thái `MOI` (cả hai vai trò) |
+| `can_cancel` | Quản lý, phiếu của trung tâm mình, trạng thái `MOI` hoặc `DA_PHAN_CONG` |
+| `can_decide_warranty` | Quản lý, phiếu của trung tâm mình, chưa `DA_HUY`, `warranty_status` = `CHUA_XAC_MINH` |
+
+Khóa trong `changes`: `serial_no`, `issue_desc`, `category_name`, `priority`, `due_date`, `warranty_status` (giá trị hiển thị tại lúc sửa).
+
+#### 3.13. `PATCH /api/tickets/{id}` · Sửa phiếu · US8 · QT-16
+
+**Request:** chỉ gửi các trường cần sửa, kèm `reason` bắt buộc.
+
+```json
+{ "device_id": 3350, "priority": "CAO", "reason": "Chọn nhầm thiết bị khi lập phiếu" }
+```
+
+- Đổi `device_id` → `warranty_status` tính lại tại `received_at` (QT-05). Đổi `priority` → `due_date` tính lại từ `received_at` (QT-04).
+- `category_id: null` = bỏ phân loại. Giữ nguyên nhóm hiện tại được, kể cả khi nhóm đó đã ngừng dùng; đổi sang nhóm khác thì nhóm mới phải đang dùng.
+- Không nhận `customer_id`, `center_id`, `status`, `ticket_code`, `received_at` (bỏ qua nếu gửi).
+
+**Response 200:** phiếu sau khi sửa, cùng cấu trúc response của endpoint 7.
+
+#### 3.14. `POST /api/tickets/{id}/cancel` · Hủy phiếu · US9 · QT-06
+
+**Request:** `{ "reason": "Khách đổi ý, nhận lại máy" }`. **Response 200:** phiếu với `"status": "DA_HUY"`. Ghi một dòng `ticket_status_log` (`from_status` = trạng thái cũ, `to_status` = `DA_HUY`, `note` = lý do).
+
+#### 3.15. `POST /api/tickets/{id}/warranty-decision` · Quyết định bảo hành · US10 · QT-17
+
+**Request:** `{ "warranty_status": "CON_BAO_HANH", "reason": "Khách xuất trình hóa đơn mua ngày 02/05/2026" }` (`HET_BAO_HANH` = có tính phí). **Response 200:** phiếu với `warranty_status` mới. Ghi một dòng `ticket_edit_log`.
+
 ### 4. Mã trạng thái của toàn bộ endpoint
 
 | #     | Thành công                   | Lỗi (ít nhất hai)                                                                                                                                                              |
@@ -295,6 +372,10 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 | 12, 15 | 201                         | 400 thiếu hoặc sai trường · 409 tên đã tồn tại · 403 không phải vai trò Quản lý · 401                                                                                          |
 | 13, 16 | 200                         | 400 · 404 không tồn tại · 409 tên đã tồn tại · 403 · 401                                                                                                                       |
 | 14, 17 | 200                         | 404 không tồn tại · 403 · 401                                                                                                                                                  |
+| 18    | 200                          | 404 không có phiếu hoặc phiếu của trung tâm khác (QT-14) · 401 |
+| 19    | 200                          | 400 sai định dạng, thiếu lý do, không có trường nào để sửa · 404 phiếu hoặc thiết bị không có · 422 phiếu không còn MỚI (QT-16), thiết bị không thuộc khách (QT-03), không có thay đổi · 401 |
+| 20    | 200                          | 400 thiếu lý do · 404 · 422 phiếu không ở MỚI / ĐÃ PHÂN CÔNG (QT-06) · 403 không phải Quản lý · 401 |
+| 21    | 200                          | 400 kết quả không hợp lệ, thiếu lý do · 404 · 422 phiếu đã có tình trạng hoặc đã hủy (QT-17) · 403 không phải Quản lý · 401 |
 
 ### 5. Bảng validation
 
@@ -343,6 +424,18 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 | page    | Không    | Số nguyên ≥ 1, mặc định 1  | Trang phải là số nguyên từ 1           |
 | size    | Không    | Số nguyên 1–100, mặc định 20 | Số dòng mỗi trang phải từ 1 đến 100  |
 
+**`PATCH /api/tickets/{id}`** (gửi ít nhất một trong bốn trường đầu, thiếu cả bốn → `fields.body`)
+
+| Trường      | Bắt buộc | Kiểu / ràng buộc                                                                   | Thông báo lỗi khi vi phạm              |
+| ----------- | -------- | ---------------------------------------------------------------------------------- | -------------------------------------- |
+| device_id   | Không    | Số nguyên dương; tồn tại (→ 404) và thuộc khách của phiếu (QT-03, → 422)            | Mã thiết bị phải là số nguyên dương    |
+| issue_desc  | Không    | Như endpoint 7: bỏ khoảng trắng đầu cuối, 10–2000 ký tự                             | Mô tả lỗi phải có từ 10 đến 2000 ký tự |
+| category_id | Không    | Số nguyên dương hoặc `null` (bỏ phân loại); nhóm mới phải đang dùng (→ 400)         | Nhóm sự cố không hợp lệ                |
+| priority    | Không    | Một trong CAO / TRUNG_BINH / THAP; không nhận `null`                                | Mức ưu tiên không hợp lệ               |
+| reason      | Có       | Chuỗi, bỏ khoảng trắng đầu cuối, 5–255 ký tự                                        | Lý do phải có từ 5 đến 255 ký tự       |
+
+**`POST /api/tickets/{id}/cancel`:** `reason` bắt buộc, 5–255 ký tự. **`POST /api/tickets/{id}/warranty-decision`:** `warranty_status` bắt buộc, chỉ `CON_BAO_HANH` hoặc `HET_BAO_HANH`; `reason` bắt buộc, 5–255 ký tự. Mã phiếu `{id}` sai định dạng → 404 như các endpoint có `{id}` khác.
+
 **`POST /api/auth/login`:** `username`, `password` bắt buộc, chuỗi khác rỗng.
 
 **`POST` / `PUT /api/products`**
@@ -366,5 +459,5 @@ Lỗi: 400 sai định dạng (mục 5) · 404 không tồn tại · 409 tên đ
 - Mỗi endpoint nghiệp vụ nối được về ít nhất một User Story; endpoint 9, 10 (HT1) và 11–17 (HT2) là yêu cầu hỗ trợ ghi ở Mục 3.1a của SRS.
 - Mỗi endpoint có ít nhất một response thành công và hai response lỗi (mục 4); endpoint 10 chỉ có một lỗi có thể xảy ra (500) vì đăng xuất luôn thành công.
 - Mọi endpoint của User Story MUST (US1, US4, US5) có chi tiết request/response ở mục 3.
-- Các quy tắc QT-01, QT-02, QT-03, QT-04, QT-05, QT-13, QT-14, QT-15 đã xuất hiện trong bảng validation, mã lỗi hoặc quy ước chung.
+- Các quy tắc QT-01, QT-02, QT-03, QT-04, QT-05, QT-06, QT-13, QT-14, QT-15, QT-16, QT-17 đã xuất hiện trong bảng validation, mã lỗi hoặc quy ước chung.
 - Tên trường đã đối chiếu với ERD (`docs/erd.drawio`, `db/schema.sql`), kể cả `warranty_status`; trường tính khi truy vấn (`warranty_expires_on`, `is_overdue`, `product_name`, `customer_name`, `category_name`) không có cột riêng.

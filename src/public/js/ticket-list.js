@@ -58,8 +58,17 @@ document.addEventListener('DOMContentLoaded', () => {
             overdueCell.append(badge);
         }
 
+        // Mã phiếu mở M4 – chi tiết, sửa, hủy phiếu (TĐ-02, TĐ-03).
+        const codeCell = cell('', 'pl-5 font-medium sm:pl-6');
+        const codeLink = document.createElement('a');
+        codeLink.className = 'link';
+        codeLink.href = `/tickets/${ticket.ticket_id}`;
+        codeLink.textContent = ticket.ticket_code;
+        codeLink.setAttribute('aria-label', `Xem chi tiết phiếu ${ticket.ticket_code}`);
+        codeCell.append(codeLink);
+
         row.append(
-            cell(ticket.ticket_code, 'pl-5 font-medium sm:pl-6'),
+            codeCell,
             cell(ticket.customer_name),
             cell(ticket.phone), // QT-15: API đã che với Tiếp nhận, đầy đủ với Quản lý (NFR2)
             cell(ticket.product_name),

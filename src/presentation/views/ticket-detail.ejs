@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <%- include('partials/head') %>
+    <title>Chi tiết phiếu · Smart CRM Mekong Mobile</title>
+    <script src="/public/js/format.js" defer></script>
+    <script src="/public/js/ticket-detail.js" defer></script>
+</head>
+<body class="min-h-dvh bg-neutral-50 font-sans text-neutral-900 antialiased" data-ticket-id="<%= ticketId %>">
+<%# M4 · Chi tiết phiếu — TĐ-02, TĐ-03. Mở từ mã phiếu ở M3.
+    Trang chỉ có khung; dữ liệu và cờ thao tác (can_edit, can_cancel, can_decide_warranty) lấy qua API 18,
+    gửi qua API 19 (sửa – QT-16), API 20 (hủy – QT-06), API 21 (quyết định bảo hành – QT-17) bằng public/js/ticket-detail.js.
+    Ẩn/hiện khối thao tác chỉ để tiện dùng; quyền thật do service kiểm lại ở từng API. %>
+<%- include('partials/navbar') %>
+<div class="lg:flex">
+    <%- include('partials/sidebar') %>
+    <div class="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-1 flex-col">
+        <main class="mx-auto w-full max-w-4xl flex-1 space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+            <div class="space-y-1">
+                <a class="link text-sm" href="/tickets">« Danh sách phiếu</a>
+                <h1 class="text-2xl font-semibold tracking-tight">Phiếu <span id="title-code"></span></h1>
+                <p class="card-desc">Trung tâm: <span class="font-medium text-neutral-900"><%= caller.center_name %></span> (chỉ phiếu của trung tâm mình)</p>
+            </div>
+
+            <div class="space-y-3" aria-live="polite">
+                <div class="space-y-2" id="detail-loading" hidden>
+                    <p class="text-sm text-neutral-500">Đang tải phiếu…</p>
+                    <div class="skeleton h-24"></div>
+                    <div class="skeleton h-40"></div>
+                </div>
+                <p class="tile text-center text-sm text-neutral-500" id="detail-not-found" hidden>
+                    Không tìm thấy phiếu này trong trung tâm của bạn. <a class="link" href="/tickets">Về danh sách phiếu</a>
+                </p>
+                <div class="alert-error flex flex-wrap items-center justify-between gap-3" id="detail-error" hidden>
+                    <span>Không tải được phiếu</span>
+                    <button type="button" class="btn-outline" id="detail-retry">Thử lại</button>
+                </div>
+                <p class="alert-success" id="action-success" tabindex="-1" hidden></p>
+            </div>
+
+            <div class="space-y-6" id="detail-content" hidden>
+                <%# ---------- Thông tin phiếu (API 18) ---------- %>
+                <section class="card" aria-labelledby="info-title">
+                    <h2 class="card-title" id="info-title">Thông tin phiếu</h2>
+                    <dl class="mt-4 grid gap-x-6 gap-y-2 text-sm md:grid-cols-2" id="ticket-info">
+                        <div><dt class="inline text-neutral-500">Khách hàng:</dt> <dd class="inline font-medium" data-field="customer_name"></dd></div>
+                        <%# QT-15: Tiếp nhận nhận số đã che từ API, Quản lý thấy đầy đủ (NFR2) %>
+                        <div><dt class="inline text-neutral-500">Số điện thoại:</dt> <dd class="inline font-medium" data-field="phone"></dd></div>
+                        <div><dt class="inline text-neutral-500">Thiết bị:</dt> <dd class="inline font-medium" data-field="device"></dd></div>
+                        <div><dt class="inline text-neutral-500">Nhóm sự cố:</dt> <dd class="inline font-medium" data-field="category_name"></dd></div>
+                        <div><dt class="inline text-neutral-500">Mức ưu tiên:</dt> <dd class="inline font-medium" data-field="priority"></dd></div>
+                        <div><dt class="inline text-neutral-500">Tình trạng bảo hành:</dt> <dd class="inline font-medium" data-field="warranty_status"></dd></div>
+                        <div><dt class="inline text-neutral-500">Trạng thái:</dt> <dd class="inline font-medium" data-field="status"></dd></div>
+                        <div><dt class="inline text-neutral-500">Tiếp nhận lúc:</dt> <dd class="inline font-medium" data-field="received_at"></dd></div>
+                        <div><dt class="inline text-neutral-500">Hạn cam kết:</dt> <dd class="inline font-medium" data-field="due_date"></dd></div>
+                        <div class="md:col-span-2"><dt class="text-neutral-500">Mô tả lỗi:</dt> <dd class="mt-1 whitespace-pre-line font-medium" data-field="issue_desc"></dd></div>
+                    </dl>
+                    <p class="alert-info mt-4" id="readonly-note" hidden></p>
+                </section>
+
+                <%# ---------- Sửa phiếu (API 19 · QT-16) ---------- %>
+                <form class="card space-y-5" id="edit-form" aria-labelledby="edit-title" novalidate hidden>
+                    <div>
+                        <h2 class="card-title" id="edit-title">Sửa phiếu</h2>
+                        <p class="card-desc mt-1">Chỉ sửa được khi phiếu còn trạng thái Mới. Đổi thiết bị thì tình trạng bảo hành được tính lại; đổi mức ưu tiên thì hạn cam kết được tính lại từ thời điểm tiếp nhận. Mỗi lần sửa được ghi vào lịch sử kèm lý do.</p>
+                    </div>
+
+                    <div>
+                        <label class="label" for="device_id">Thiết bị của khách</label>
+                        <select class="select" id="device_id" name="device_id" aria-describedby="device_id-error" disabled>
+                            <option value="">Đang tải…</option>
+                        </select>
+                        <p class="field-error" id="device_id-error" data-error-for="device_id"></p>
+                    </div>
+
+                    <div>
+                        <label class="label" for="issue_desc">Mô tả lỗi * <span class="font-normal text-neutral-500">(10–2000 ký tự)</span></label>
+                        <textarea class="textarea min-h-28" id="issue_desc" name="issue_desc" rows="4" maxlength="2000" aria-describedby="issue_desc-error"></textarea>
+                        <p class="field-error" id="issue_desc-error" data-error-for="issue_desc"></p>
+                    </div>
+
+                    <div class="grid gap-5 md:grid-cols-2">
+                        <div>
+                            <label class="label" for="category_id">Nhóm sự cố</label>
+                            <select class="select" id="category_id" name="category_id" aria-describedby="category_id-error" disabled>
+                                <option value="">Đang tải…</option>
+                            </select>
+                            <p class="field-error" id="category_id-error" data-error-for="category_id"></p>
+                        </div>
+
+                        <fieldset aria-describedby="priority-error">
+                            <legend class="label">Mức ưu tiên</legend>
+                            <div class="flex flex-wrap gap-2">
+                                <% [['CAO', 'Cao'], ['TRUNG_BINH', 'Trung bình'], ['THAP', 'Thấp']].forEach(([value, text]) => { %>
+                                <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm has-checked:border-neutral-900 has-checked:bg-neutral-900 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-neutral-900 has-focus-visible:ring-offset-2">
+                                    <input type="radio" name="priority" value="<%= value %>" class="accent-neutral-900">
+                                    <%= text %>
+                                </label>
+                                <% }) %>
+                            </div>
+                            <p class="field-error" id="priority-error" data-error-for="priority"></p>
+                        </fieldset>
+                    </div>
+
+                    <div>
+                        <label class="label" for="edit-reason">Lý do sửa * <span class="font-normal text-neutral-500">(5–255 ký tự)</span></label>
+                        <input class="input" id="edit-reason" name="reason" maxlength="255" placeholder="Chọn nhầm thiết bị khi lập phiếu" aria-describedby="edit-reason-error">
+                        <p class="field-error" id="edit-reason-error" data-error-for="edit-reason"></p>
+                    </div>
+
+                    <p class="alert-error" id="edit-error" hidden></p>
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn-primary" id="edit-save">Lưu thay đổi</button>
+                    </div>
+                </form>
+
+                <%# ---------- Quyết định bảo hành (API 21 · QT-17) – chỉ Quản lý, phiếu chưa xác minh ---------- %>
+                <form class="card space-y-5" id="decision-form" aria-labelledby="decision-title" novalidate hidden>
+                    <div>
+                        <h2 class="card-title" id="decision-title">Quyết định bảo hành</h2>
+                        <p class="alert-warning mt-2">ⓘ Phiếu chưa xác minh bảo hành (thiết bị không có ngày mua). Quản lý trung tâm quyết định miễn phí hay có tính phí.</p>
+                    </div>
+                    <fieldset aria-describedby="warranty_status-error">
+                        <legend class="label">Kết quả *</legend>
+                        <div class="flex flex-wrap gap-2">
+                            <% [['CON_BAO_HANH', 'Còn bảo hành (miễn phí)'], ['HET_BAO_HANH', 'Hết bảo hành (có tính phí)']].forEach(([value, text]) => { %>
+                            <label class="inline-flex cursor-pointer items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm has-checked:border-neutral-900 has-checked:bg-neutral-900 has-checked:text-white has-focus-visible:ring-2 has-focus-visible:ring-neutral-900 has-focus-visible:ring-offset-2">
+                                <input type="radio" name="warranty_status" value="<%= value %>" class="accent-neutral-900">
+                                <%= text %>
+                            </label>
+                            <% }) %>
+                        </div>
+                        <p class="field-error" id="warranty_status-error" data-error-for="warranty_status"></p>
+                    </fieldset>
+                    <div>
+                        <label class="label" for="decision-reason">Lý do *</label>
+                        <input class="input" id="decision-reason" name="reason" maxlength="255" placeholder="Khách xuất trình hóa đơn mua ngày 02/05/2026" aria-describedby="decision-reason-error">
+                        <p class="field-error" id="decision-reason-error" data-error-for="decision-reason"></p>
+                    </div>
+                    <p class="alert-error" id="decision-error" hidden></p>
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn-primary" id="decision-save">Lưu quyết định</button>
+                    </div>
+                </form>
+
+                <%# ---------- Hủy phiếu (API 20 · QT-06) – chỉ Quản lý ---------- %>
+                <form class="card space-y-5" id="cancel-form" aria-labelledby="cancel-title" novalidate hidden>
+                    <div>
+                        <h2 class="card-title" id="cancel-title">Hủy phiếu</h2>
+                        <p class="card-desc mt-1">Dùng khi khách không bảo hành nữa. Phiếu chuyển sang trạng thái Đã hủy, không xóa khỏi hệ thống và không mở lại được.</p>
+                    </div>
+                    <div>
+                        <label class="label" for="cancel-reason">Lý do hủy *</label>
+                        <input class="input" id="cancel-reason" name="reason" maxlength="255" placeholder="Khách đổi ý, nhận lại máy" aria-describedby="cancel-reason-error">
+                        <p class="field-error" id="cancel-reason-error" data-error-for="cancel-reason"></p>
+                    </div>
+                    <p class="alert-error" id="cancel-error" hidden></p>
+                    <div class="flex justify-end">
+                        <button type="submit" class="btn-outline border-red-300 text-red-700 hover:bg-red-50" id="cancel-save">Hủy phiếu</button>
+                    </div>
+                </form>
+
+                <%# ---------- Lịch sử (API 18) ---------- %>
+                <section class="card" aria-labelledby="history-title">
+                    <h2 class="card-title" id="history-title">Lịch sử phiếu</h2>
+                    <p class="tile mt-4 text-center text-sm text-neutral-500" id="history-empty" hidden>Phiếu chưa có lịch sử</p>
+                    <ol class="mt-4 space-y-3" id="history-list"></ol>
+                </section>
+            </div>
+        </main>
+        <%- include('partials/footer') %>
+    </div>
+</div>
+</body>
+</html>

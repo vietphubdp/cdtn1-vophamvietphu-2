@@ -8,6 +8,7 @@ const { createFakeDeviceRepository } = require('./fakeDevice');
 const {
     createFakeTicketRepository,
     createFakeTicketStatusLogRepository,
+    createFakeTicketEditLogRepository,
     createFakeTransactionRunner,
 } = require('./fakeTicket');
 
@@ -64,6 +65,7 @@ function createTestDeps(overrides = {}) {
             device: createFakeDeviceRepository(),
             ticket: createFakeTicketRepository(),
             ticketStatusLog: createFakeTicketStatusLogRepository(),
+            ticketEditLog: createFakeTicketEditLogRepository(),
         },
         withTransaction: createFakeTransactionRunner().withTransaction,
         jwt: TEST_JWT,

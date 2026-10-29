@@ -47,19 +47,18 @@ describe('isOverdue – FR11', () => {
         expect(isOverdue(ticket, new Date(dueAt.getTime() - 1))).toBe(false);
     });
 
-    test('FR11 luồng đúng: Hoàn tất, Đã đóng không bị đánh dấu dù đã qua hạn', () => {
-        for (const status of [TicketStatus.HOAN_TAT, TicketStatus.DA_DONG]) {
+    test('FR11 luồng đúng: Hoàn tất, Đã đóng, Đã hủy không bị đánh dấu dù đã qua hạn (TĐ-03)', () => {
+        for (const status of [TicketStatus.HOAN_TAT, TicketStatus.DA_DONG, TicketStatus.DA_HUY]) {
             expect(isOverdue({ status, due_date: dueAt }, NOW)).toBe(false);
         }
     });
 
-    test('Q9 luồng đúng: mọi trạng thái còn lại (kể cả DA_HUY) qua hạn đều bị đánh dấu, đúng câu chữ FR11', () => {
+    test('FR11 luồng đúng: mọi trạng thái còn lại qua hạn đều bị đánh dấu', () => {
         const open = [
             TicketStatus.MOI,
             TicketStatus.DA_PHAN_CONG,
             TicketStatus.DANG_XU_LY,
             TicketStatus.CHO_LINH_KIEN,
-            TicketStatus.DA_HUY,
         ];
         for (const status of open) {
             expect(isOverdue({ status, due_date: dueAt }, NOW)).toBe(true);

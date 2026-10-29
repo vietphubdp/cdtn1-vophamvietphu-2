@@ -1,7 +1,7 @@
 'use strict';
 
-const { Priority } = require('../../domain/constants');
-const { readBody, isAbsent, charLength, throwIfAnyField } = require('./fieldRules');
+const { Priority, WarrantyStatus } = require('../../domain/constants');
+const { readBody, isAbsent, charLength, throwIfAnyField, parsePathId } = require('./fieldRules');
 
 // Giới hạn theo db/schema.sql và api-contract mục 5.
 const ISSUE_DESC_MIN = 10; // CHECK char_length(issue_desc) BETWEEN 10 AND 2000
@@ -9,6 +9,16 @@ const ISSUE_DESC_MAX = 2000;
 const BIGINT_ID_MAX = Number.MAX_SAFE_INTEGER; // customer_id, device_id BIGINT, đọc ra số (db.js)
 const INT_ID_MAX = 2147483647; // category_id INT
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Lý do sửa, hủy phiếu, quyết định bảo hành (CHECK ticket_edit_log.reason, ticket_status_log.note VARCHAR(255)).
+const REASON_MIN = 5;
+const REASON_MAX = 255;
+
+// API 21 (QT-17): Quản lý chỉ chọn một trong hai kết quả.
+const WARRANTY_DECISIONS = [WarrantyStatus.CON_BAO_HANH, WarrantyStatus.HET_BAO_HANH];
+
+// Các trường sửa được ở API 19 (QT-16).
+const EDITABLE_FIELDS = ['device_id', 'issue_desc', 'category_id', 'priority'];
 
 // Phân trang API 8 (api-contract mục 2, mục 5).
 const PAGE_DEFAULT = 1;
@@ -24,10 +34,15 @@ const MESSAGES = Object.freeze({
     idempotency_key: 'Thiếu khóa chống trùng: header Idempotency-Key phải là một UUID',
     page: 'Trang phải là số nguyên từ 1',
     size: `Số dòng mỗi trang phải từ 1 đến ${SIZE_MAX}`,
+    reason: `Lý do phải có từ ${REASON_MIN} đến ${REASON_MAX} ký tự`,
+    noEditableField: 'Gửi ít nhất một trường cần sửa: device_id, issue_desc, category_id hoặc priority',
+    warranty_status: 'Chọn Còn bảo hành (CON_BAO_HANH) hoặc Hết bảo hành – có tính phí (HET_BAO_HANH)',
 });
 
 const TICKET_INVALID_MESSAGE = 'Thông tin phiếu chưa hợp lệ. Sửa các trường được đánh dấu rồi gửi lại.';
 const LIST_INVALID_MESSAGE = 'Tham số phân trang không hợp lệ';
+const CANCEL_INVALID_MESSAGE = 'Chưa hủy được phiếu. Nhập lý do hủy rồi gửi lại.';
+const DECISION_INVALID_MESSAGE = 'Chưa lưu được quyết định bảo hành. Sửa các trường được đánh dấu rồi gửi lại.';
 
 const PRIORITIES = Object.values(Priority);
 
@@ -83,6 +98,84 @@ function validateTicketCreate(body, idempotencyKeyHeader) {
     return { input, idempotencyKey: idempotencyKeyHeader.toLowerCase() };
 }
 
+/** Lý do bỏ khoảng trắng đầu cuối, dài 5–255 ký tự → bản đã cắt; sai → null. */
+function toReason(value) {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    const length = charLength(trimmed);
+    return length >= REASON_MIN && length <= REASON_MAX ? trimmed : null;
+}
+
+/** Mã phiếu trong đường dẫn `/api/tickets/{id}` (API 18–21); sai định dạng → 404. */
+function parseTicketId(raw) {
+    return parsePathId(raw, BIGINT_ID_MAX, 'phiếu bảo hành');
+}
+
+/**
+ * API 19 (QT-16): body sửa phiếu, gom đủ lỗi rồi ném một lần. Chỉ trường nào được gửi mới có trong `input`.
+ * category_id = null nghĩa là bỏ phân loại; priority không nhận null (phiếu luôn có mức ưu tiên).
+ * Bắt buộc có `reason` và ít nhất một trường cần sửa. Không đọc customer_id, center_id, status, ticket_code:
+ * các trường này không sửa được.
+ *
+ * @returns {object} { device_id?, issue_desc?, category_id?, priority?, reason }
+ */
+function validateTicketUpdate(body) {
+    const raw = readBody(body);
+    const fields = {};
+    const input = {};
+
+    if (!EDITABLE_FIELDS.some((name) => raw[name] !== undefined)) fields.body = MESSAGES.noEditableField;
+
+    if (raw.device_id !== undefined) {
+        if (!isIdInRange(raw.device_id, BIGINT_ID_MAX)) fields.device_id = MESSAGES.device_id;
+        else input.device_id = raw.device_id;
+    }
+
+    if (raw.issue_desc !== undefined) {
+        const issueDesc = toIssueDesc(raw.issue_desc);
+        if (issueDesc === null) fields.issue_desc = MESSAGES.issue_desc;
+        else input.issue_desc = issueDesc;
+    }
+
+    if (raw.category_id !== undefined) {
+        if (raw.category_id === null) input.category_id = null;
+        else if (!isIdInRange(raw.category_id, INT_ID_MAX)) fields.category_id = MESSAGES.category_id;
+        else input.category_id = raw.category_id;
+    }
+
+    if (raw.priority !== undefined) {
+        if (!PRIORITIES.includes(raw.priority)) fields.priority = MESSAGES.priority;
+        else input.priority = raw.priority;
+    }
+
+    const reason = toReason(raw.reason);
+    if (reason === null) fields.reason = MESSAGES.reason;
+    else input.reason = reason;
+
+    throwIfAnyField(fields, TICKET_INVALID_MESSAGE);
+    return input;
+}
+
+/** API 20 (QT-06): body hủy phiếu `{ reason }`. */
+function validateTicketCancel(body) {
+    const reason = toReason(readBody(body).reason);
+    throwIfAnyField(reason === null ? { reason: MESSAGES.reason } : {}, CANCEL_INVALID_MESSAGE);
+    return { reason };
+}
+
+/** API 21 (QT-17): body quyết định bảo hành `{ warranty_status, reason }`, gom đủ lỗi rồi ném một lần. */
+function validateWarrantyDecision(body) {
+    const raw = readBody(body);
+    const fields = {};
+
+    if (!WARRANTY_DECISIONS.includes(raw.warranty_status)) fields.warranty_status = MESSAGES.warranty_status;
+    const reason = toReason(raw.reason);
+    if (reason === null) fields.reason = MESSAGES.reason;
+
+    throwIfAnyField(fields, DECISION_INVALID_MESSAGE);
+    return { warranty_status: raw.warranty_status, reason };
+}
+
 /**
  * Tham số phân trang trong query: vắng → giá trị mặc định; chuỗi chỉ gồm chữ số và nằm trong
  * [min, max] → số; còn lại (rỗng, '1.5', '-1', 'abc', gửi hai lần thành mảng) → null.
@@ -118,6 +211,12 @@ function validateTicketList(query) {
 module.exports = {
     validateTicketCreate,
     validateTicketList,
+    validateTicketUpdate,
+    validateTicketCancel,
+    validateWarrantyDecision,
+    parseTicketId,
+    REASON_MIN,
+    REASON_MAX,
     MESSAGES,
     ISSUE_DESC_MIN,
     ISSUE_DESC_MAX,

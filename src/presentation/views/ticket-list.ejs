@@ -19,7 +19,8 @@
                 <h1 class="text-2xl font-semibold tracking-tight">Danh sách phiếu của trung tâm</h1>
                 <p class="card-desc mt-1">
                     Trung tâm: <span class="font-medium text-neutral-900"><%= caller.center_name %></span>
-                    (chỉ phiếu của trung tâm mình – QT-14) · Sắp theo Hạn cam kết tăng dần · 20 dòng/trang
+                    (chỉ phiếu của trung tâm mình) · Sắp theo Hạn cam kết tăng dần · 20 dòng/trang
+                    · Bấm mã phiếu để xem chi tiết, sửa<%= caller.role === 'QUAN_LY_TRUNG_TAM' ? ', hủy phiếu hoặc quyết định bảo hành' : ' phiếu' %>
                 </p>
             </div>
 
@@ -46,18 +47,18 @@
                         <table class="table">
                             <thead>
                             <tr>
-                                <th scope="col" class="pl-5 sm:pl-6">(1) Mã phiếu</th>
-                                <th scope="col">(2) Khách hàng</th>
-                                <th scope="col">(3) Số điện thoại</th>
-                                <th scope="col">(4) Tên máy</th>
-                                <th scope="col">(5) Serial/IMEI</th>
-                                <th scope="col">(6) Nhóm sự cố</th>
-                                <th scope="col">(7) Mức ưu tiên</th>
-                                <th scope="col">(8) Tình trạng bảo hành</th>
-                                <th scope="col">(9) Trạng thái</th>
-                                <th scope="col">(10) Tiếp nhận lúc</th>
-                                <th scope="col">(11) Hạn cam kết</th>
-                                <th scope="col" class="pr-5 sm:pr-6">(12) Quá hạn</th>
+                                <th scope="col" class="pl-5 sm:pl-6">Mã phiếu</th>
+                                <th scope="col">Khách hàng</th>
+                                <th scope="col">Số điện thoại</th>
+                                <th scope="col">Tên máy</th>
+                                <th scope="col">Serial/IMEI</th>
+                                <th scope="col">Nhóm sự cố</th>
+                                <th scope="col">Mức ưu tiên</th>
+                                <th scope="col">Tình trạng bảo hành</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col">Tiếp nhận lúc</th>
+                                <th scope="col">Hạn cam kết</th>
+                                <th scope="col" class="pr-5 sm:pr-6">Quá hạn</th>
                             </tr>
                             </thead>
                             <tbody id="ticket-rows"></tbody>
@@ -72,7 +73,7 @@
                             <span class="text-neutral-500" id="page-total"></span>
                         </nav>
                         <%# FR11: không báo chỉ bằng màu (UI8) – dòng quá hạn còn có nhãn "QUÁ HẠN" ở cột (12) %>
-                        <p class="text-red-700">Dòng tô đỏ = phiếu quá hạn (hạn cam kết đã qua, chưa Hoàn tất / Đã đóng – FR11)</p>
+                        <p class="text-red-700">Dòng tô đỏ = phiếu quá hạn (hạn cam kết đã qua, chưa Hoàn tất, Đã đóng hoặc Đã hủy)</p>
                     </div>
                 </div>
             </section>

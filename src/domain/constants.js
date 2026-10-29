@@ -29,6 +29,17 @@ const TicketStatus = Object.freeze({
     DA_HUY: 'DA_HUY',
 });
 
+// Tên trạng thái trong thông báo lỗi của service (khớp nhãn hiển thị ở public/js/format.js).
+const TicketStatusLabel = Object.freeze({
+    [TicketStatus.MOI]: 'Mới',
+    [TicketStatus.DA_PHAN_CONG]: 'Đã phân công',
+    [TicketStatus.DANG_XU_LY]: 'Đang xử lý',
+    [TicketStatus.CHO_LINH_KIEN]: 'Chờ linh kiện',
+    [TicketStatus.HOAN_TAT]: 'Hoàn tất',
+    [TicketStatus.DA_DONG]: 'Đã đóng',
+    [TicketStatus.DA_HUY]: 'Đã hủy',
+});
+
 const WarrantyStatus = Object.freeze({
     CON_BAO_HANH: 'CON_BAO_HANH',
     HET_BAO_HANH: 'HET_BAO_HANH',
@@ -48,6 +59,7 @@ module.exports = {
     RoleLabel,
     Priority,
     TicketStatus,
+    TicketStatusLabel,
     WarrantyStatus,
     DEFAULT_WARRANTY_MONTHS,
     WARRANTY_MONTHS_MIN,
