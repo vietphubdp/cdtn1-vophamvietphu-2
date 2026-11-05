@@ -51,6 +51,7 @@ Các lệnh lẻ (đã gộp trong `npm run setup`):
 | `npm run db:seed`    | Chạy lần lượt `db/seeds/001_*.js` → `007_*.js` theo số đầu tên file, trong một giao dịch. Chèn bằng `ON CONFLICT DO NOTHING` nên chạy lại không nhân đôi (lần hai in "thêm mới 0 dòng"). |
 | `npm start`          | Chạy máy chủ không tự khởi động lại khi sửa code.                                                                                                                                        |
 | `npm test`           | Chạy toàn bộ test, không cần CSDL (mục 5).                                                                                                                                               |
+| `npm run test:system` | Chạy 12 test case của Test Report trên PostgreSQL thật, CSDL thử riêng `smart_crm_l2_systest` (mục 5).                                                                                 |
 
 ### Cách B – chạy bằng Docker (chỉ cần Docker Desktop / Docker Engine có Compose)
 
@@ -158,6 +159,15 @@ npm test                  # hiển thị số test PASS
 
 Test không cần PostgreSQL: lớp service dùng repository giả, test HTTP gọi `createApp(deps)` qua `supertest`. Tên test bắt đầu bằng mã yêu cầu (QT-xx, USx-ACy, FRx, NFRx…) để truy vết.
 
+### Test hệ thống TC-01…TC-12 (Test Report)
+
+```bash
+npm run test:system                 # cả 12 TC, cần PostgreSQL theo .env
+npm run test:system -- -t TC-05     # chạy lại riêng một TC
+```
+
+Chạy app thật với repository PostgreSQL thật qua `supertest`. Mỗi lần chạy, CSDL thử `smart_crm_l2_systest` bị **xóa và dựng lại** bằng migrate + seed (không đụng CSDL dev `DB_NAME`), đồng hồ cố định theo giờ Việt Nam. Kế hoạch ở `docs/test-plan.md`, kết quả ở `docs/test-report.md`.
+
 ### Kiểm nhanh API lập phiếu bằng `curl`
 
 Cần `npm run dev` đang chạy và dữ liệu mẫu. Chạy trong **Git Bash** (Windows) hoặc terminal macOS/Linux, ở một thư mục ngoài repo vì `lan.txt` chứa cookie đăng nhập. Trên PowerShell 5.1, `curl` là tên khác của `Invoke-WebRequest` nên phải gõ `curl.exe`. Body ghi ra file UTF-8 rồi gửi bằng `--data-binary` để giữ đúng tiếng Việt. Mỗi lần gửi dùng một `Idempotency-Key` khác (gửi lại cùng khóa trả phiếu cũ với mã 200).
@@ -260,6 +270,8 @@ Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui 
 | Thay đổi thiết kế so với BT1 | `docs/thay-doi-thiet-ke.md` |
 | Khai báo sử dụng AI          | `docs/ai-disclosure.md`     |
 | Bug Log                      | `docs/bug-log.md`           |
+| Test Plan                    | `docs/test-plan.md`         |
+| Test Report (12 TC)          | `docs/test-report.md`       |
 
 Ảnh minh chứng trong `docs/screenshots/`:
 
@@ -271,3 +283,5 @@ Mã phiếu ở bước 4 có thể nhảy một số (sequence không quay lui 
 | `08` → `10` (`login-…`) | Đăng nhập thành công vào M1 và đăng nhập sai mật khẩu |
 | `11` → `15` (`m1-…`, `m2-…`, `m3-…`) | Luồng chính: tra khách → lập phiếu → tạo khách và thiết bị → danh sách phiếu; Quản lý thấy số không che (QT-15) |
 | `16-trang-thai-dang-tai.png`, `17-trang-thai-rong.png`, `18-trang-thai-loi-thu-lai.png` | Ba trạng thái đang tải · rỗng · lỗi kèm nút Thử lại |
+| `TC-01.png` → `TC-12.png` | Kết quả chạy thật từng test case của Test Report (`npm run test:system -- -t TC-xx`) |
+| `19-test-system-12-pass.png`, `20-npm-test-sau-sua-bug.png` | 12/12 TC PASS trên PostgreSQL · `npm test` 505/505 PASS sau khi sửa BUG-001…003 |
