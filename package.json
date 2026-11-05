@@ -18,12 +18,17 @@
     "db:migrate": "node db/migrate.js",
     "db:seed": "node db/seed.js",
     "setup": "npm run db:migrate && npm run db:seed",
-    "test": "jest"
+    "test": "jest",
+    "test:system": "jest -c jest.system.config.js --runInBand"
   },
   "jest": {
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/tests"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/tests/system/"
     ]
   },
   "repository": {
