@@ -1,7 +1,7 @@
 # Thay đổi thiết kế so với Bài tập 1
 
 **Sinh viên:** Võ Phạm Việt Phú · 2374802010391 · Track SE · Luồng L2 – Tiếp nhận và phân loại yêu cầu bảo hành
-**Cập nhật lần cuối:** 29/10/2026
+**Cập nhật lần cuối:** 05/11/2026 (thêm mục [Phản hồi Bài tập 2 và quyết định xử lý](#phản-hồi-bài-tập-2-và-quyết-định-xử-lý))
 
 Tài liệu liệt kê mọi chỗ thiết kế BT2 khác bản nộp BT1, kèm lý do. Hướng thiết kế không đổi: vẫn phạm vi L2, UC1–UC6, FR1–FR11 và lược đồ `db/schema.sql`. Hai loại thay đổi:
 
@@ -10,11 +10,11 @@ Tài liệu liệt kê mọi chỗ thiết kế BT2 khác bản nộp BT1, kèm 
 
 ## Tổng quan
 
-| Mã    | Loại | Nội dung                   | Tài liệu đã sửa                                                        |
-| ----- | ---- | -------------------------- | ---------------------------------------------------------------------- |
-| TĐ-01 | B    | Đăng nhập, đăng xuất (HT1) | `srs.md`, `api-contract.md`, `architecture.drawio`, `wireframe.drawio` |
-| TĐ-02 | B    | Sửa phiếu bảo hành khi nhập nhầm (US8, FR12, QT-16), màn hình M4 | `srs.md`, `api-contract.md`, `db/schema.sql`, `README.md` |
-| TĐ-03 | B    | Quản lý trung tâm hủy phiếu (US9, FR13, QT-06) và quyết định bảo hành phiếu chưa xác minh (US10, FR14, QT-17) | `srs.md`, `api-contract.md`, `db/schema.sql`, `README.md` |
+| Mã    | Loại | Nội dung                                                                                                      | Tài liệu đã sửa                                                        |
+| ----- | ---- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| TĐ-01 | B    | Đăng nhập, đăng xuất (HT1)                                                                                    | `srs.md`, `api-contract.md`, `architecture.drawio`, `wireframe.drawio` |
+| TĐ-02 | B    | Sửa phiếu bảo hành khi nhập nhầm (US8, FR12, QT-16), màn hình M4                                              | `srs.md`, `api-contract.md`, `db/schema.sql`, `README.md`              |
+| TĐ-03 | B    | Quản lý trung tâm hủy phiếu (US9, FR13, QT-06) và quyết định bảo hành phiếu chưa xác minh (US10, FR14, QT-17) | `srs.md`, `api-contract.md`, `db/schema.sql`, `README.md`              |
 
 ## Chi tiết
 
@@ -49,3 +49,5 @@ Tài liệu liệt kê mọi chỗ thiết kế BT2 khác bản nộp BT1, kèm 
 - **Hiện thực:** endpoint 20 `POST /api/tickets/{id}/cancel`, endpoint 21 `POST /api/tickets/{id}/warranty-decision`, cùng nằm trong **TicketUpdateService**. Trên M4, khối "Quyết định bảo hành" và "Hủy phiếu" chỉ hiện khi API 18 trả cờ tương ứng; quyền thật vẫn do service kiểm lại ở từng API.
 - **Lý do:** phản hồi của giảng viên khi xem demo buổi 12 (29/10/2026): Quản lý trung tâm chỉ có quyền xem phiếu là quá ít. Hai quyền được chọn vì đều nằm trong luồng L2 theo case study: "khách hủy" là nhánh `MỚI → ĐÃ HỦY` của Hình 6.2, và QT-05 ghi phiếu chưa xác minh "cần quản lý phê duyệt". Phân công kỹ thuật viên **không** thêm vì thuộc luồng L4 (W1).
 - **Ảnh hưởng:** bỏ "hủy phiếu" khỏi W8 và bỏ W12 khỏi danh sách không làm. FR11 sửa thành "chưa ở trạng thái Hoàn tất, Đã đóng **hoặc Đã hủy**": phiếu đã hủy không còn bị tô đỏ QUÁ HẠN ở M3. Trước đây L2 không có phiếu Đã hủy nên FR11 chỉ loại hai trạng thái.
+
+## Phản hồi Bài tập 2 và quyết định xử lý
