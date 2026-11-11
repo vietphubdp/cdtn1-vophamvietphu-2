@@ -1,0 +1,47 @@
+# CI: mỗi lần push / pull request chạy toàn bộ unit + HTTP test (npm test)
+# và 12 test case hệ thống trên PostgreSQL 16 thật (npm run test:system, docs/test-report.md).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: smart_crm_l2
+      # Khóa chỉ dùng cho CSDL thử trong CI, không phải secret thật.
+      JWT_SECRET: ci-only-jwt-secret-not-used-anywhere-else
+      JWT_EXPIRES_IN: 8h
+      LOG_LEVEL: error
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build:css
+      - name: Unit + HTTP test
+        run: npm test
+      - name: 12 test case hệ thống trên PostgreSQL
+        run: npm run test:system
