@@ -1,0 +1,358 @@
+openapi: 3.0.3
+info:
+  title: Mekong Mobile Smart CRM - Flow L2 API
+  version: 1.0.0
+  description: RESTful API for Warranty Intake and Classification (Flow L2), Track SE, Graduation Topic 1 (VLU).
+servers:
+  - url: http://localhost:3000/api
+    description: Local Docker environment
+paths:
+  /customers:
+    get:
+      summary: Lookup customer by phone number
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "0901234567"
+      responses:
+        '200':
+          description: Customer profile found
+        '400':
+          description: Invalid phone number
+        '404':
+          description: Customer not found
+    post:
+      summary: Register a new customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [full_name, phone]
+              properties:
+                full_name:
+                  type: string
+                phone:
+                  type: string
+                email:
+                  type: string
+                address:
+                  type: string
+      responses:
+        '201':
+          description: Customer registered
+        '409':
+          description: Phone already registered
+
+  /customers/{id}/devices:
+    get:
+      summary: List registered devices of a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of devices with dynamic warranty status
+        '404':
+          description: Customer not found
+    post:
+      summary: Register a new device for customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_id, serial_no]
+              properties:
+                product_id:
+                  type: integer
+                serial_no:
+                  type: string
+                purchase_date:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Device registered
+        '409':
+          description: Serial number already exists
+
+  /devices/{id}/warranty:
+    get:
+      summary: Evaluate device warranty status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: at
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Warranty evaluation result (CON_BAO_HANH, HET_BAO_HANH, CHUA_XAC_MINH)
+
+  /issue-categories:
+    get:
+      summary: List issue categories
+      parameters:
+        - name: include_inactive
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Active categories with default priorities
+    post:
+      summary: Add an issue category (Manager only)
+      responses:
+        '201':
+          description: Category created
+
+  /issue-categories/{id}:
+    put:
+      summary: Update issue category
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category updated
+    delete:
+      summary: Deactivate issue category (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Category deactivated
+
+  /products:
+    get:
+      summary: List catalog product models
+      responses:
+        '200':
+          description: Products list
+    post:
+      summary: Add new product model
+      responses:
+        '201':
+          description: Product added
+
+  /products/{id}:
+    put:
+      summary: Update product model
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product updated
+    delete:
+      summary: Deactivate product model (soft delete)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Product deactivated
+
+  /tickets:
+    get:
+      summary: List tickets of caller's service centre
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Paginated tickets list
+    post:
+      summary: Create new warranty ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customer_id, device_id, category_id, priority, issue_desc]
+              properties:
+                customer_id:
+                  type: integer
+                device_id:
+                  type: integer
+                category_id:
+                  type: integer
+                priority:
+                  type: string
+                  enum: [KHAN_CAP, CAO, TRUNG_BINH, THAP]
+                issue_desc:
+                  type: string
+      responses:
+        '201':
+          description: Ticket created with calculated due date and sequential code
+
+  /tickets/{id}:
+    get:
+      summary: Get detailed ticket by ID with audit logs
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detailed ticket information
+        '404':
+          description: Ticket not found or belongs to another centre (QT-14)
+    patch:
+      summary: Edit ticket in state MOI
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                priority:
+                  type: string
+                category_id:
+                  type: integer
+                device_id:
+                  type: integer
+                issue_desc:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Ticket updated and audit log recorded
+
+  /tickets/{id}/cancel:
+    post:
+      summary: Cancel warranty ticket (Manager only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Ticket marked as DA_HUY
+
+  /tickets/{id}/warranty-decision:
+    post:
+      summary: Approve warranty status for unverified ticket (Manager only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, reason]
+              properties:
+                decision:
+                  type: string
+                  enum: [CON_BAO_HANH, HET_BAO_HANH]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Warranty decision recorded
+
+  /auth/login:
+    post:
+      summary: Authenticate user and receive HTTP-only JWT cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful, cookie set
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      summary: Log out user and clear JWT cookie
+      responses:
+        '204':
+          description: Logged out successfully
