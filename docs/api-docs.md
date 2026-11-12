@@ -664,3 +664,4 @@ Once cancelled, ticket cannot be reopened or edited. Excluded from SLA overdue w
 | `422` | `BUSINESS_RULE_VIOLATION` | Ticket warranty status is already verified. |
 **7. Limits & Special Behaviour:**
 Can only be executed once per ticket. Decision and audit reasoning are logged permanently in `ticket_edit_log`.
+

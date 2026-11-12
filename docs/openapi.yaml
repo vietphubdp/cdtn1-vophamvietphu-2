@@ -356,3 +356,4 @@ paths:
       responses:
         '204':
           description: Logged out successfully
+

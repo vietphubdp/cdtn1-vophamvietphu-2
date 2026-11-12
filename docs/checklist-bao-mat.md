@@ -25,3 +25,4 @@
 ### KẾT LUẬN TỰ ĐÁNH GIÁ
 
 Hệ thống phân hệ L2 đã thực hiện đầy đủ **7/7 hạng mục an toàn thông tin** theo tiêu chuẩn của học phần Chuyên đề Tốt nghiệp 1 và OWASP Top 10:2025, có đầy đủ minh chứng chạy thật trên mã nguồn và cơ sở dữ liệu.
+

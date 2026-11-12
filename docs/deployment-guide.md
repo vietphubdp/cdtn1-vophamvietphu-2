@@ -163,3 +163,4 @@ When deploying to a public cloud or production server:
 | `ECONNREFUSED db:5432` during container startup | Application attempted to connect before PostgreSQL was ready. | Docker Compose already enforces `condition: service_healthy`. If manual testing, wait 5 seconds and retry. |
 | `relation "ticket" does not exist` | Existing Docker volume bypassed initial table creation. | Reset environment completely: `docker compose down -v && docker compose up -d --build`. |
 | Seed script fails with conflict | Previous seed data partially modified. | Run `docker compose down -v` to reset PostgreSQL volume to a clean state. |
+
