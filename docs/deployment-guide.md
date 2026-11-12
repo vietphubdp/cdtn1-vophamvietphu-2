@@ -164,3 +164,38 @@ When deploying to a public cloud or production server:
 | `relation "ticket" does not exist` | Existing Docker volume bypassed initial table creation. | Reset environment completely: `docker compose down -v && docker compose up -d --build`. |
 | Seed script fails with conflict | Previous seed data partially modified. | Run `docker compose down -v` to reset PostgreSQL volume to a clean state. |
 
+---
+
+## 9. Live Cloud Deployment on Render (Optional Bonus)
+
+To fulfill the bonus evaluation criteria (Session 16 Slide 12, +1.0 mark), the prototype has been deployed and is publicly accessible on the cloud platform Render:
+
+- **Public Live Application URL:** https://smart-crm-l2.onrender.com
+- **Healthcheck Verification Endpoint:** https://smart-crm-l2.onrender.com/health (returns `{"status":"ok"}`)
+- **Hosting Region:** Singapore (Southeast Asia cluster)
+
+### Deployment Architecture & Provisioning Steps:
+1. **Managed PostgreSQL Database:**
+   - Created a managed PostgreSQL 16 instance on Render (`smart-crm-db`), region Singapore.
+   - Database name: `smartcrm_vfpn`, user: `smartcrm`.
+2. **Web Service Configuration:**
+   - Created a Node.js Web Service connected directly to the GitHub repository (`cdtn1-vophamvietphu-2`, branch `main`).
+   - **Build Command:**
+     ```bash
+     npm install --include=dev && npm run build:css
+     ```
+     *(The `--include=dev` flag ensures `@tailwindcss/cli` is installed to compile Tailwind CSS in a production build container).*
+   - **Start Command:**
+     ```bash
+     node -e "const fs=require('fs'),{Client}=require('pg'),{loadDbConfig}=require('./src/config');const c=new Client(loadDbConfig());c.connect().then(()=>c.query(fs.readFileSync('db/schema.sql','utf8'))).then(()=>{console.log('Đã chạy schema.sql');return c.end();}).then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1);})" && node db/seed.js && node src/server.js
+     ```
+     *(Automatically executes database migration `db/schema.sql`, populates baseline sample data `db/seed.js`, and boots the Express server `src/server.js`)*.
+3. **Secure Environment Variables Configuration:**
+   - Database credentials (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`) are injected securely via Render's Environment Variables dashboard, keeping secrets completely isolated from the public Git repository (Criterion C7).
+   - Set `NODE_ENV=production` to enforce HTTP-only, SameSite secure cookie transmission over HTTPS.
+4. **Demonstration & Testing:**
+   - Access `https://smart-crm-l2.onrender.com` in any web browser.
+   - Log in using sample credentials: `lan.q10` / `Demo@2026` (Intake Officer) or `hung.q10` / `Demo@2026` (Centre Manager).
+   - *Note on Free Tier:* The free tier spins down after 15 minutes of inactivity; waking up on first request may take ~30–50 seconds.
+
+
